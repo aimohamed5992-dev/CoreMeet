@@ -66,3 +66,67 @@ export const ArrowRightIcon = (p: SVGProps<SVGSVGElement>) => (
     <path d="M5 12h14M13 6l6 6-6 6" />
   </svg>
 );
+
+export const SparkleIcon = (p: SVGProps<SVGSVGElement>) => (
+  <svg {...base(p)}>
+    <path d="M12 3c.6 3.9 2.1 5.4 6 6-3.9.6-5.4 2.1-6 6-.6-3.9-2.1-5.4-6-6 3.9-.6 5.4-2.1 6-6Z" fill="currentColor" stroke="none" />
+  </svg>
+);
+
+export const GlobeIcon = (p: SVGProps<SVGSVGElement>) => (
+  <svg {...base(p)}>
+    <circle cx="12" cy="12" r="9" />
+    <path d="M3 12h18M12 3c2.5 2.7 3.8 6 3.8 9S14.5 18.3 12 21c-2.5-2.7-3.8-6-3.8-9S9.5 5.7 12 3Z" />
+  </svg>
+);
+
+export const ClockIcon = (p: SVGProps<SVGSVGElement>) => (
+  <svg {...base(p)}>
+    <circle cx="12" cy="12" r="9" />
+    <path d="M12 7v5l3.5 2" />
+  </svg>
+);
+
+export const LockIcon = (p: SVGProps<SVGSVGElement>) => (
+  <svg {...base(p)}>
+    <rect x="4.5" y="10.5" width="15" height="10" rx="2.5" />
+    <path d="M8 10.5V7a4 4 0 0 1 8 0v3.5" />
+  </svg>
+);
+
+export const PlayIcon = (p: SVGProps<SVGSVGElement>) => (
+  <svg {...base(p)}>
+    <path d="M8 5.5v13l11-6.5-11-6.5Z" fill="currentColor" />
+  </svg>
+);
+
+export const CheckIcon = (p: SVGProps<SVGSVGElement>) => (
+  <svg {...base(p)}>
+    <path d="m5 13 4 4L19 7" />
+  </svg>
+);
+
+export const PlusIcon = (p: SVGProps<SVGSVGElement>) => (
+  <svg {...base(p)}>
+    <path d="M12 5v14M5 12h14" />
+  </svg>
+);
+
+export const MinusIcon = (p: SVGProps<SVGSVGElement>) => (
+  <svg {...base(p)}>
+    <path d="M5 12h14" />
+  </svg>
+);
+
+export const WaveIcon = (p: SVGProps<SVGSVGElement>) => (
+  <svg {...base(p)}>
+    <path d="M2 12c2-4 4-4 6 0s4 4 6 0 4-4 6 0" />
+  </svg>
+);
+
+export const DeviceIcon = (p: SVGProps<SVGSVGElement>) => (
+  <svg {...base(p)}>
+    <rect x="2" y="4" width="14" height="11" rx="2" />
+    <path d="M2 18h14M18 9h4v11h-4z" />
+  </svg>
+);

@@ -1,11 +1,29 @@
+import { lazy, Suspense } from "react";
 import { Navigate, Route, Routes, useParams } from "react-router-dom";
 import MarketingLayout from "./layouts/MarketingLayout";
+import AppLayout from "./layouts/AppLayout";
+import ProtectedRoute from "./components/ProtectedRoute";
+import Logo from "./components/Logo";
 import LandingPage from "./pages/LandingPage";
-import PlaceholderPage from "./pages/PlaceholderPage";
+import LoginPage from "./pages/auth/LoginPage";
+import RegisterPage from "./pages/auth/RegisterPage";
+import DashboardPage from "./pages/DashboardPage";
+import ProfilePage from "./pages/ProfilePage";
+
+// The meeting room pulls in SignalR + WebRTC + framer-motion — load it on demand.
+const MeetingRoute = lazy(() => import("./pages/meeting/MeetingRoute"));
 
 function JoinRedirect() {
-  const { code } = useParams();
-  return <PlaceholderPage title={`Joining ${code ?? ""}`} step="step 3" />;
+  const { code = "" } = useParams();
+  return <Navigate to={`/meeting/${code}`} replace />;
+}
+
+function RouteFallback() {
+  return (
+    <div style={{ minHeight: "100vh", display: "grid", placeItems: "center", background: "var(--room-bg)" }}>
+      <Logo size={30} />
+    </div>
+  );
 }
 
 export default function App() {
@@ -15,11 +33,26 @@ export default function App() {
         <Route index element={<LandingPage />} />
       </Route>
 
-      <Route path="/login" element={<PlaceholderPage title="Sign in" step="step 2" />} />
-      <Route path="/register" element={<PlaceholderPage title="Create your account" step="step 2" />} />
-      <Route path="/app" element={<PlaceholderPage title="Your meetings" step="step 3" />} />
+      <Route path="/login" element={<LoginPage />} />
+      <Route path="/register" element={<RegisterPage />} />
       <Route path="/join/:code" element={<JoinRedirect />} />
-      <Route path="/meeting/:code" element={<PlaceholderPage title="Meeting room" step="step 4" />} />
+
+      {/* Meetings are open to guests — sign-in is only required to create one. */}
+      <Route
+        path="/meeting/:code"
+        element={
+          <Suspense fallback={<RouteFallback />}>
+            <MeetingRoute />
+          </Suspense>
+        }
+      />
+
+      <Route element={<ProtectedRoute />}>
+        <Route element={<AppLayout />}>
+          <Route path="/app" element={<DashboardPage />} />
+          <Route path="/settings" element={<ProfilePage />} />
+        </Route>
+      </Route>
 
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

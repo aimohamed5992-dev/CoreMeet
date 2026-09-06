@@ -13,9 +13,23 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
 
     public DbSet<ChatMessage> ChatMessages => Set<ChatMessage>();
 
+    public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
+
     protected override void OnModelCreating(ModelBuilder builder)
     {
         base.OnModelCreating(builder);
+
+        // Every key is a Guid assigned in the domain constructor, never database-generated.
+        // Without this, EF treats a graph-added entity that already carries a key value as
+        // Modified (→ an UPDATE that affects 0 rows) rather than Added.
+        foreach (var key in builder.Model.GetEntityTypes()
+                     .Select(t => t.FindPrimaryKey())
+                     .Where(k => k is { Properties.Count: 1 })
+                     .Select(k => k!.Properties[0])
+                     .Where(p => p.ClrType == typeof(Guid)))
+        {
+            key.ValueGenerated = Microsoft.EntityFrameworkCore.Metadata.ValueGenerated.Never;
+        }
 
         builder.Entity<User>(e =>
         {
@@ -25,6 +39,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             e.HasIndex(u => u.Email).IsUnique();
             e.Property(u => u.PasswordHash).HasMaxLength(256).IsRequired();
             e.Property(u => u.AvatarColor).HasMaxLength(9);
+            e.Property(u => u.AvatarUrl).HasColumnType("mediumtext");
         });
 
         builder.Entity<Meeting>(e =>
@@ -43,6 +58,8 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
         {
             e.HasKey(p => p.Id);
             e.Property(p => p.DisplayName).HasMaxLength(120).IsRequired();
+            e.Property(p => p.AvatarColor).HasMaxLength(9);
+            e.Property(p => p.AvatarUrl).HasColumnType("mediumtext");
             e.HasOne(p => p.Meeting)
                 .WithMany(m => m.Participants)
                 .HasForeignKey(p => p.MeetingId)
@@ -51,7 +68,22 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
                 .WithMany(u => u.Participations)
                 .HasForeignKey(p => p.UserId)
                 .OnDelete(DeleteBehavior.SetNull);
-            e.HasIndex(p => new { p.MeetingId, p.UserId });
+            // One row per (meeting, account). Guests all have a null user_id and
+            // MySQL permits repeated NULLs, so they are unaffected.
+            e.HasIndex(p => new { p.MeetingId, p.UserId }).IsUnique();
+        });
+
+        builder.Entity<RefreshToken>(e =>
+        {
+            e.HasKey(t => t.Id);
+            e.Property(t => t.TokenHash).HasMaxLength(128).IsRequired();
+            e.Property(t => t.ReplacedByTokenHash).HasMaxLength(128);
+            e.HasIndex(t => t.TokenHash).IsUnique();
+            e.Ignore(t => t.IsActive);
+            e.HasOne(t => t.User)
+                .WithMany(u => u.RefreshTokens)
+                .HasForeignKey(t => t.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
         });
 
         builder.Entity<ChatMessage>(e =>

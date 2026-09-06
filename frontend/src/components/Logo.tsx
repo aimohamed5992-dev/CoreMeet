@@ -38,8 +38,9 @@ export function LogoMark({ size = 32, tone = "brand" }: Pick<LogoProps, "size" |
 }
 
 export default function Logo({ size = 30, withWordmark = true, tone = "brand", style, className }: LogoProps) {
-  const wordColor =
-    tone === "mono-light" ? "#ffffff" : tone === "mono-dark" ? "#0d1b12" : "var(--text)";
+  const isMono = tone === "mono-light" || tone === "mono-dark";
+  const wordColor = tone === "mono-light" ? "#ffffff" : tone === "mono-dark" ? "#0d1b12" : "var(--text)";
+  const accentColor = isMono ? wordColor : "var(--brand-500)";
   return (
     <span
       className={className}
@@ -56,7 +57,7 @@ export default function Logo({ size = 30, withWordmark = true, tone = "brand", s
             color: wordColor,
           }}
         >
-          Core<span style={{ color: "var(--brand-500)" }}>Meet</span>
+          Core<span style={{ color: accentColor }}>Meet</span>
         </span>
       )}
     </span>

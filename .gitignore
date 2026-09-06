@@ -22,3 +22,6 @@ frontend/dist/
 
 # ---- Logs ----
 *.log
+
+# Manus source PNGs (optimized copies live in frontend/public/manus)
+frontend/src/assets/manus/

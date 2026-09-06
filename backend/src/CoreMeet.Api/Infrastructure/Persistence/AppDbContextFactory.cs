@@ -11,10 +11,10 @@ public class AppDbContextFactory : IDesignTimeDbContextFactory<AppDbContext>
     public AppDbContext CreateDbContext(string[] args)
     {
         var connectionString = Environment.GetEnvironmentVariable("COREMEET_DB")
-            ?? "server=localhost;port=3306;database=coremeet;user=root;password=root";
+            ?? "server=localhost;port=3306;database=coremeet;user=root;password=";
 
         var options = new DbContextOptionsBuilder<AppDbContext>()
-            .UseMySql(connectionString, new MySqlServerVersion(new Version(8, 4, 0)))
+            .UseMySql(connectionString, new MariaDbServerVersion(new Version(10, 4, 28)))
             .UseSnakeCaseNamingConvention()
             .Options;
 

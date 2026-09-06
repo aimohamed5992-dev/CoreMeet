@@ -1,16 +1,75 @@
-import axios from "axios";
+import axios, { AxiosError, type InternalAxiosRequestConfig } from "axios";
 import { config } from "./config";
+import { getSession, setSession } from "./auth/tokenStore";
 
-/**
- * Shared axios instance. Auth interceptors (attaching the JWT and refreshing
- * it) are added in step 2 together with the auth feature.
- */
+/** Shared axios instance for the CoreMeet API. */
 export const api = axios.create({
   baseURL: config.apiBaseUrl,
   headers: { "Content-Type": "application/json" },
 });
 
-export type ApiError = {
-  message: string;
-  errors?: Record<string, string[]>;
-};
+/** Bare client for the refresh call so it never recurses through the interceptor. */
+const bare = axios.create({ baseURL: config.apiBaseUrl });
+
+api.interceptors.request.use((cfg) => {
+  const token = getSession()?.accessToken;
+  if (token && cfg.headers) cfg.headers.Authorization = `Bearer ${token}`;
+  return cfg;
+});
+
+let refreshing: Promise<string | null> | null = null;
+
+async function refreshAccessToken(): Promise<string | null> {
+  const current = getSession();
+  if (!current?.refreshToken) return null;
+  try {
+    const { data } = await bare.post("/api/auth/refresh", {
+      refreshToken: current.refreshToken,
+    });
+    setSession({
+      accessToken: data.accessToken,
+      refreshToken: data.refreshToken,
+      user: data.user,
+    });
+    return data.accessToken as string;
+  } catch {
+    setSession(null);
+    return null;
+  }
+}
+
+api.interceptors.response.use(
+  (res) => res,
+  async (error: AxiosError) => {
+    const original = error.config as InternalAxiosRequestConfig & { _retried?: boolean };
+    const isAuthCall = original?.url?.includes("/api/auth/");
+
+    if (error.response?.status === 401 && original && !original._retried && !isAuthCall) {
+      original._retried = true;
+      refreshing ??= refreshAccessToken().finally(() => {
+        refreshing = null;
+      });
+      const newToken = await refreshing;
+      if (newToken) {
+        original.headers.Authorization = `Bearer ${newToken}`;
+        return api(original);
+      }
+    }
+    return Promise.reject(error);
+  },
+);
+
+export type ApiError = { message: string; errors?: Record<string, string[]> };
+
+/** Pull a human-readable message out of an axios error. */
+export function errorMessage(err: unknown, fallback = "Something went wrong."): string {
+  if (axios.isAxiosError(err)) {
+    const data = err.response?.data as ApiError | undefined;
+    if (data?.errors) {
+      const first = Object.values(data.errors)[0];
+      if (first?.length) return first[0];
+    }
+    if (data?.message) return data.message;
+  }
+  return fallback;
+}

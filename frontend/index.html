@@ -7,6 +7,15 @@
     <meta name="theme-color" content="#1fa84c" />
     <meta name="description" content="CoreMeet — secure, instant video meetings in your browser, built with WebRTC." />
     <title>CoreMeet — instant video meetings</title>
+    <script>
+      // Apply the saved theme before first paint (light is the default).
+      try {
+        var t = localStorage.getItem("coremeet.theme");
+        document.documentElement.setAttribute("data-theme", t === "dark" ? "dark" : "light");
+      } catch (e) {
+        document.documentElement.setAttribute("data-theme", "light");
+      }
+    </script>
   </head>
   <body>
     <div id="root"></div>

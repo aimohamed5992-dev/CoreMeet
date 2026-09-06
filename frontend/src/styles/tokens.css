@@ -1,5 +1,7 @@
 /* CoreMeet design tokens
-   ------------------------------------------------------------------ */
+   ------------------------------------------------------------------
+   Light is the default. Dark is opt-in via <html data-theme="dark">.
+*/
 :root {
   /* Brand — emerald green from the CoreMeet logo */
   --brand-50:  #e9f9ef;
@@ -26,7 +28,7 @@
   --ink-50:  #f7faf8;
   --white:   #ffffff;
 
-  /* Semantic */
+  /* Semantic — light */
   --bg:            var(--ink-50);
   --surface:       var(--white);
   --surface-muted: var(--ink-100);
@@ -38,7 +40,22 @@
   --primary-soft:  var(--brand-50);
   --focus-ring:    color-mix(in srgb, var(--brand-500) 45%, transparent);
   --danger:        #d64545;
+  --danger-hover:  #c03a3a;
   --warning:       #d9a400;
+
+  /* Meeting room — light */
+  --room-bg:            #eef1f0;
+  --room-panel:         var(--white);
+  --room-panel-2:       #f4f6f5;
+  --room-border:        #dfe4e2;
+  --room-text:          var(--ink-900);
+  --room-text-dim:      #5a6b62;
+  --room-tile:          #202b25;   /* video backdrop stays dark in both themes */
+  --room-tile-border:   #cfd6d3;
+  --room-control:       #e6eae8;
+  --room-control-hover: #d7ddda;
+  --room-control-fg:    var(--ink-800);
+  --room-bar:           var(--white);
 
   /* Typography */
   --font-sans: "Inter", "Segoe UI", system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif;
@@ -64,22 +81,6 @@
   --transition: 160ms cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
-    --bg:            #0b130e;
-    --surface:       #121c15;
-    --surface-muted: #18251c;
-    --border:        #24352a;
-    --text:          #eaf2 ec;
-    --text:          #eaf2ec;
-    --text-muted:    #9fb2a7;
-    --primary-soft:  #14281c;
-    --shadow-sm: 0 1px 2px rgba(0,0,0,0.4);
-    --shadow-md: 0 4px 12px rgba(0,0,0,0.45);
-    --shadow-lg: 0 18px 40px rgba(0,0,0,0.55);
-  }
-}
-
 :root[data-theme="dark"] {
   --bg:            #0b130e;
   --surface:       #121c15;
@@ -88,7 +89,21 @@
   --text:          #eaf2ec;
   --text-muted:    #9fb2a7;
   --primary-soft:  #14281c;
+  --focus-ring:    color-mix(in srgb, var(--brand-400) 55%, transparent);
   --shadow-sm: 0 1px 2px rgba(0,0,0,0.4);
   --shadow-md: 0 4px 12px rgba(0,0,0,0.45);
   --shadow-lg: 0 18px 40px rgba(0,0,0,0.55);
+
+  --room-bg:            #0b130e;
+  --room-panel:         #131d17;
+  --room-panel-2:       #101a13;
+  --room-border:        #24352a;
+  --room-text:          #eaf2ec;
+  --room-text-dim:      #9fb2a7;
+  --room-tile:          #16211b;
+  --room-tile-border:   #2a3a31;
+  --room-control:       #1e2b24;
+  --room-control-hover: #29392f;
+  --room-control-fg:    #eaf2ec;
+  --room-bar:           #0d1712;
 }

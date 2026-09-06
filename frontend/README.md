@@ -14,15 +14,18 @@ npm run dev      # http://localhost:5173
 
 ```
 src/
-├── components/     Logo, icons, HeroIllustration (hand-built SVG brand assets)
-├── layouts/        MarketingLayout (public header/footer)
-├── pages/          LandingPage + step placeholders
-├── lib/            api.ts (axios), config.ts (env)
+├── components/     Logo, Avatar, icons, HeroIllustration, ProtectedRoute
+├── layouts/        MarketingLayout (public), AppLayout (authenticated shell)
+├── pages/          LandingPage, DashboardPage, auth/ (Login, Register, AuthShell)
+├── lib/
+│   ├── api.ts          axios instance + JWT attach + 401→refresh→retry
+│   └── auth/           AuthContext, tokenStore, authApi, types
 ├── styles/         tokens.css (design system: color, type, spacing, shadows)
 └── App.tsx         routes
 ```
 
-Routing is in place; `/login`, `/register` land in step 2, `/app` + `/join/:code`
-in step 3, `/meeting/:code` in step 4.
+Auth is wired: register/login/logout, session persisted to `localStorage`,
+protected routes redirect to `/login`. `/app` + `/join/:code` get their real
+screens in step 3, `/meeting/:code` in step 4.
 
 The dev server proxies `/api` and `/hubs` (WebSocket) to `VITE_API_BASE_URL`.

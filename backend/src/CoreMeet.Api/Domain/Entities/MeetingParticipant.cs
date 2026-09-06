@@ -17,6 +17,12 @@ public class MeetingParticipant
 
     public string DisplayName { get; set; } = string.Empty;
 
+    /// <summary>Avatar for guests (or a snapshot of the user's avatar), as a data URI.</summary>
+    public string? AvatarUrl { get; set; }
+
+    /// <summary>Hex fallback colour for this participant's avatar.</summary>
+    public string AvatarColor { get; set; } = "#667a6f";
+
     public ParticipantRole Role { get; set; } = ParticipantRole.Guest;
 
     public bool IsConnected { get; set; }

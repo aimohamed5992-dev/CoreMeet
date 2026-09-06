@@ -25,7 +25,6 @@ namespace CoreMeet.Api.Infrastructure.Persistence.Migrations
             modelBuilder.Entity("CoreMeet.Api.Domain.Entities.ChatMessage", b =>
                 {
                     b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("char(36)")
                         .HasColumnName("id");
 
@@ -65,7 +64,6 @@ namespace CoreMeet.Api.Infrastructure.Persistence.Migrations
             modelBuilder.Entity("CoreMeet.Api.Domain.Entities.Meeting", b =>
                 {
                     b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("char(36)")
                         .HasColumnName("id");
 
@@ -117,9 +115,18 @@ namespace CoreMeet.Api.Infrastructure.Persistence.Migrations
             modelBuilder.Entity("CoreMeet.Api.Domain.Entities.MeetingParticipant", b =>
                 {
                     b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("char(36)")
                         .HasColumnName("id");
+
+                    b.Property<string>("AvatarColor")
+                        .IsRequired()
+                        .HasMaxLength(9)
+                        .HasColumnType("varchar(9)")
+                        .HasColumnName("avatar_color");
+
+                    b.Property<string>("AvatarUrl")
+                        .HasColumnType("mediumtext")
+                        .HasColumnName("avatar_url");
 
                     b.Property<string>("DisplayName")
                         .IsRequired()
@@ -158,15 +165,61 @@ namespace CoreMeet.Api.Infrastructure.Persistence.Migrations
                         .HasDatabaseName("ix_meeting_participants_user_id");
 
                     b.HasIndex("MeetingId", "UserId")
+                        .IsUnique()
                         .HasDatabaseName("ix_meeting_participants_meeting_id_user_id");
 
                     b.ToTable("meeting_participants", (string)null);
                 });
 
+            modelBuilder.Entity("CoreMeet.Api.Domain.Entities.RefreshToken", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("char(36)")
+                        .HasColumnName("id");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime(6)")
+                        .HasColumnName("created_at");
+
+                    b.Property<DateTime>("ExpiresAt")
+                        .HasColumnType("datetime(6)")
+                        .HasColumnName("expires_at");
+
+                    b.Property<string>("ReplacedByTokenHash")
+                        .HasMaxLength(128)
+                        .HasColumnType("varchar(128)")
+                        .HasColumnName("replaced_by_token_hash");
+
+                    b.Property<DateTime?>("RevokedAt")
+                        .HasColumnType("datetime(6)")
+                        .HasColumnName("revoked_at");
+
+                    b.Property<string>("TokenHash")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("varchar(128)")
+                        .HasColumnName("token_hash");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("char(36)")
+                        .HasColumnName("user_id");
+
+                    b.HasKey("Id")
+                        .HasName("pk_refresh_tokens");
+
+                    b.HasIndex("TokenHash")
+                        .IsUnique()
+                        .HasDatabaseName("ix_refresh_tokens_token_hash");
+
+                    b.HasIndex("UserId")
+                        .HasDatabaseName("ix_refresh_tokens_user_id");
+
+                    b.ToTable("refresh_tokens", (string)null);
+                });
+
             modelBuilder.Entity("CoreMeet.Api.Domain.Entities.User", b =>
                 {
                     b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("char(36)")
                         .HasColumnName("id");
 
@@ -175,6 +228,10 @@ namespace CoreMeet.Api.Infrastructure.Persistence.Migrations
                         .HasMaxLength(9)
                         .HasColumnType("varchar(9)")
                         .HasColumnName("avatar_color");
+
+                    b.Property<string>("AvatarUrl")
+                        .HasColumnType("mediumtext")
+                        .HasColumnName("avatar_url");
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime(6)")
@@ -252,6 +309,18 @@ namespace CoreMeet.Api.Infrastructure.Persistence.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("CoreMeet.Api.Domain.Entities.RefreshToken", b =>
+                {
+                    b.HasOne("CoreMeet.Api.Domain.Entities.User", "User")
+                        .WithMany("RefreshTokens")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_refresh_tokens_users_user_id");
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("CoreMeet.Api.Domain.Entities.Meeting", b =>
                 {
                     b.Navigation("Messages");
@@ -264,6 +333,8 @@ namespace CoreMeet.Api.Infrastructure.Persistence.Migrations
                     b.Navigation("HostedMeetings");
 
                     b.Navigation("Participations");
+
+                    b.Navigation("RefreshTokens");
                 });
 #pragma warning restore 612, 618
         }
