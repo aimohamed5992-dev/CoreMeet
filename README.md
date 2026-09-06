@@ -1,45 +1,62 @@
+<div align="center">
+
 # CoreMeet
 
-A Google Meet–style video meeting platform. Sign in, start a **New meeting**, share
-the code, and talk face to face in the browser over **WebRTC**.
+**A Google Meet–style video meeting platform.**
+Sign in, start a meeting, share the code — everyone is talking face to face in the browser over WebRTC.
 
-- **Backend:** ASP.NET Core Web API (.NET 10) + EF Core 9 + **Pomelo MySQL** provider
-- **Frontend:** React 19 + Vite + TypeScript
-- **Real-time:** SignalR (signaling) + WebRTC (media, peer-to-peer mesh)
-- **Database:** MySQL 8 / MariaDB 10.4+
+[![.NET](https://img.shields.io/badge/.NET-10-512BD4?logo=dotnet&logoColor=white)](https://dotnet.microsoft.com/)
+[![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=black)](https://react.dev/)
+[![WebRTC](https://img.shields.io/badge/WebRTC-mesh-333333?logo=webrtc&logoColor=white)](https://webrtc.org/)
+[![SignalR](https://img.shields.io/badge/SignalR-realtime-512BD4)](https://dotnet.microsoft.com/apps/aspnet/signalr)
+[![MySQL](https://img.shields.io/badge/MySQL_%2F_MariaDB-schema-4479A1?logo=mysql&logoColor=white)](https://www.mysql.com/)
 
-### In-meeting
+</div>
 
-Camera + mic with pre-join lobby and device pickers, mid-call device switching,
-screen share (presenter takes the stage, others move to a side rail), live
-participant roster, in-call chat, host "end for everyone", keyboard shortcuts
-(**m** mute · **e** camera · **c** chat). Google-Meet-style monochrome controls.
+![CoreMeet landing page](docs/screenshots/landing-hero.jpg)
 
-### Access & identity
+---
 
-- **Guests** can join any meeting from its link — a pre-join screen asks for a
-  name (required) and an optional photo, and lets them set camera/mic before
-  entering. **An account is only needed to _create_ a meeting.**
-- Signed-in users can upload an optional profile photo (Profile & photo in the
-  account menu). Images are resized client-side to 256px and stored as a data URI.
+## Highlights
 
-### Theming
+- 🎥 **Full-mesh WebRTC** — peer-to-peer video & audio, adaptive tile grid
+- 🖥️ **Screen share** — the presenter takes the stage, everyone else moves to a side rail
+- 🚪 **Pre-join lobby** — camera preview, device pickers, mic/camera set before you enter
+- 👥 **Guest access** — join any meeting from a link with just a name; an account is only needed to *create* one
+- 💬 **In-call chat + live roster**, host "end for everyone", keyboard shortcuts (`m` `e` `c`)
+- 🎨 **Light / dark theme** (light by default), Google-Meet-style monochrome controls
+- 🖼️ **Optional profile & guest photos**, resized client-side
+- ✨ **Animated marketing site** with `framer-motion` and generated photography
 
-Light is the default; a toggle (header / lobby / meeting room) switches to dark
-and the choice is remembered in `localStorage`. System preference is not followed.
+---
 
-### Marketing site
+## Screenshots
 
-The landing page is a full marketing page — hero, logo cloud, feature rows,
-feature grid, product showcase, how-it-works, animated stats, testimonials,
-security, FAQ accordion, CTA and a multi-column footer — with scroll-reveal and
-micro-animations via `framer-motion`.
+| | |
+|---|---|
+| **Landing — light** | **Landing — dark** |
+| ![](docs/screenshots/landing-hero.jpg) | ![](docs/screenshots/landing-hero-dark.jpg) |
+| **Feature sections** | **Sign up** |
+| ![](docs/screenshots/landing-features.jpg) | ![](docs/screenshots/auth-register.jpg) |
+| **Dashboard** | **Pre-join lobby (guest)** |
+| ![](docs/screenshots/dashboard.jpg) | ![](docs/screenshots/lobby.jpg) |
+| **Meeting room — light** | **Meeting room — dark** |
+| ![](docs/screenshots/meeting-room.jpg) | ![](docs/screenshots/meeting-room-dark.jpg) |
+| **Screen share (presenter view)** | |
+| ![](docs/screenshots/screen-share.jpg) | |
 
-Photography is generated with the **Manus** agent API (keys in
-`~/.documentary_keys`) and lives in `frontend/public/manus/*.jpg` (resized +
-compressed). `BrandImage` falls back to a brand gradient if an asset is missing.
-Regenerate with `scratchpad/manus_gen.py` (edit the `SCENES` brief, then
-`sips` to optimise into `public/manus/`).
+<sub>The green tiles are Chrome's fake camera device used in headless testing.</sub>
+
+---
+
+## Stack
+
+| Layer | Tech |
+|-------|------|
+| **Backend** | ASP.NET Core Web API (.NET 10), EF Core 9 + **Pomelo** MySQL provider, SignalR |
+| **Frontend** | React 19 + Vite + TypeScript, `@microsoft/signalr`, `framer-motion` |
+| **Real-time** | SignalR for signaling & presence · WebRTC (`RTCPeerConnection`) for media |
+| **Database** | MySQL 8 / MariaDB 10.4+ |
 
 ```
 CoreMeet/
@@ -47,106 +64,104 @@ CoreMeet/
 │   └── src/CoreMeet.Api
 ├── frontend/           React + Vite app
 ├── infra/              docker-compose (MySQL + Adminer)
-└── README.md
+├── docs/screenshots/   images used in this README
+└── coremeet.sql        schema-only dump (alternative to EF migrations)
 ```
 
 ---
 
-## Build plan (5 steps)
+## Running locally
 
-| Step | Scope | Status |
-|------|-------|--------|
-| **1** | Scaffolding: both projects, DB schema + EF migration, design system, logo, landing page, routing, API client | ✅ done |
-| **2** | Authentication — email + password (BCrypt), JWT + rotating refresh tokens, register/login/logout UI, protected routes | ✅ done |
-| **3** | Meetings — create / join by code, participant roster, SignalR hub (presence + live chat), redesigned dashboard + meeting room shell | ✅ done |
-| **4** | WebRTC — full-mesh RTCPeerConnection, live video/audio tiles, mic + camera toggle (with remote state signaling), screen share via `replaceTrack` | ✅ done |
-| **5** | Pre-join lobby with camera preview + device pickers, in-call device switching, keyboard shortcuts, lobby presence, solo-room hint, smooth-scroll nav | ✅ done |
-
-All five steps complete.
-
-### WebRTC notes
-
-- **Topology:** full mesh — each participant holds one `RTCPeerConnection` per
-  other participant. Good for small rooms (≈ up to 6–8); an SFU would be the next
-  step for larger calls.
-- **Signaling:** the joining client sends offers to everyone already in the room
-  (learned via `roomPeers`); the others answer. ICE candidates are trickled and
-  buffered until the remote description is set.
-- **STUN only** (`stun:stun.l.google.com:19302`). Peers on different NATs will
-  need a **TURN** server — add it to `config.iceServers` in `frontend/src/lib/config.ts`.
-
----
-
-## Running the app
-
-### 1. Database (MySQL 8 or MariaDB 10.4+)
-
-Either start the bundled container:
+### 1. Database — MySQL 8 or MariaDB 10.4+
 
 ```bash
 cd infra && docker compose up -d mysql
 ```
 
-…or use an existing server (e.g. XAMPP). Set `ConnectionStrings:Default` in
-`backend/src/CoreMeet.Api/appsettings.Development.json` to match — the default is
-`server=localhost;port=3306;database=coremeet;user=root;password=` (XAMPP style,
-empty root password). The server version is auto-detected at startup.
+…or use an existing server (XAMPP, etc). Set `ConnectionStrings:Default` in
+`backend/src/CoreMeet.Api/appsettings.Development.json`. The default matches a
+stock XAMPP install: `server=localhost;port=3306;database=coremeet;user=root;password=`.
+The server version is auto-detected at startup.
 
-### 2. Backend
+### 2. Backend → http://localhost:5099
 
 ```bash
 cd backend/src/CoreMeet.Api
-dotnet ef database update      # applies all migrations, creates the DB if needed
-dotnet run                     # http://localhost:5099
+dotnet ef database update      # apply migrations (or import ../../coremeet.sql)
+dotnet run
 ```
 
-Check: `curl http://localhost:5099/api/health` and `/api/health/db`.
-OpenAPI doc: `http://localhost:5099/openapi/v1.json`.
+`curl http://localhost:5099/api/health` · OpenAPI at `/openapi/v1.json`.
 
-**Auth endpoints:** `POST /api/auth/register` · `POST /api/auth/login` ·
-`POST /api/auth/refresh` · `POST /api/auth/logout` · `GET /api/auth/me` (Bearer).
-Access tokens last 30 min; refresh tokens 7 days and rotate on every use
-(reuse of a rotated token revokes the whole chain).
-
-**Meeting endpoints:** `POST /api/meetings` (create) · `GET /api/meetings/mine` ·
-`GET /api/meetings/{code}` · `POST /api/meetings/{code}/join` ·
-`POST /api/meetings/{code}/end` (host only). Codes look like `abc-defg-hij`.
-
-**Realtime hub:** `/hubs/meeting` (SignalR, JWT via `?access_token=`). Client calls
-`JoinRoom(code, participantId)` then receives `peerJoined` / `peerLeft` /
-`roomPeers` / `chatMessage`; `SendChatMessage(text)` broadcasts + persists.
-`SendOffer` / `SendAnswer` / `SendIceCandidate` relay WebRTC signaling;
-`SetMediaState(audio, video)` broadcasts `peerMediaState` so remote tiles show
-muted-mic / camera-off.
-
-### 3. Frontend
+### 3. Frontend → http://localhost:5173
 
 ```bash
 cd frontend
 cp .env.example .env
 npm install
-npm run dev                    # http://localhost:5173
+npm run dev
 ```
 
 ---
 
-## Database schema (created in step 1)
+## API surface
 
-- **users** — `id`, `name`, `email` (unique), `password_hash`, `avatar_color`, `created_at`
-- **refresh_tokens** — `id`, `user_id`, `token_hash` (unique), `expires_at`, `revoked_at?`, `replaced_by_token_hash?`
-- **meetings** — `id`, `code` (unique), `title`, `host_id`, `status`, timestamps
-- **meeting_participants** — `id`, `meeting_id`, `user_id?`, `display_name`, `role`, `is_connected`, join/leave times
-- **chat_messages** — `id`, `meeting_id`, `sender_participant_id`, `sender_name`, `content`, `sent_at`
+**Auth** — `POST /api/auth/register` · `/login` · `/refresh` · `/logout` · `GET /api/auth/me`
+Access tokens last 30 min; refresh tokens are 7-day, single-use and rotate on every
+call — reusing a rotated token revokes the whole chain.
 
-Endpoints for meetings / chat are wired up in later steps.
+**Profile** — `PUT /api/profile` (name + optional avatar data URI).
+
+**Meetings** — `POST /api/meetings` (auth) · `GET /api/meetings/mine` ·
+`GET /api/meetings/{code}` · `POST /api/meetings/{code}/join` (guests allowed) ·
+`POST /api/meetings/{code}/end` (host). Codes look like `abc-defg-hij`.
+
+**Realtime hub** — `/hubs/meeting` (SignalR, JWT via `?access_token=`, guests connect anonymously):
+
+| Client → server | Server → client |
+|---|---|
+| `JoinRoom(code, participantId)` | `roomPeers`, `peerJoined`, `peerLeft` |
+| `SendChatMessage(text)` | `chatMessage` (also persisted) |
+| `SetMediaState(audio, video, screen)` | `peerMediaState` |
+| `SendOffer` / `SendAnswer` / `SendIceCandidate` | `offer` / `answer` / `iceCandidate` |
+
+---
+
+## How the WebRTC mesh works
+
+- **Topology:** full mesh — one `RTCPeerConnection` per pair of participants. Great
+  for small rooms (≈ 6–8); an SFU would be the next step for bigger calls.
+- **Signaling:** the joining client sends offers to everyone already in the room
+  (learned from `roomPeers`); the others answer. ICE candidates are trickled and
+  buffered until the remote description is set.
+- **Screen share** swaps the outgoing video track with `replaceTrack` — no
+  renegotiation. A `screen` flag on `peerMediaState` switches every client to the
+  presenter layout.
+- **STUN only** (`stun:stun.l.google.com:19302`). Peers on different NATs need a
+  **TURN** server — add it to `config.iceServers` in `frontend/src/lib/config.ts`.
+
+---
+
+## Database schema
+
+| Table | Key columns |
+|-------|-------------|
+| `users` | `id`, `name`, `email` (unique), `password_hash`, `avatar_color`, `avatar_url?` |
+| `refresh_tokens` | `id`, `user_id`, `token_hash` (unique, SHA-256), `expires_at`, `revoked_at?` |
+| `meetings` | `id`, `code` (unique), `title`, `host_id`, `status`, timestamps |
+| `meeting_participants` | `id`, `meeting_id`, `user_id?`, `display_name`, `role`, `avatar_url?`, connect state |
+| `chat_messages` | `id`, `meeting_id`, `sender_participant_id`, `sender_name`, `content`, `sent_at` |
+
+Migrations: `InitialCreate` → `AddRefreshTokens` → `UniqueParticipantPerMeeting` → `AvatarsAndGuests`.
+`coremeet.sql` is a schema-only dump for importing the structure directly.
 
 ---
 
 ## Notes
 
-- `NU1903` build warning comes from `Microsoft.OpenApi` 2.0.0, a transitive
-  dependency pinned by `Microsoft.AspNetCore.OpenApi` 10.0.10. It only affects
-  untrusted YAML parsing, which this API does not do. It clears when ASP.NET Core
-  ships an updated OpenApi package.
-- Images: `manus` was not reachable and the image-generation credit balance was
-  empty, so brand visuals are hand-built SVG (see `frontend/src/components`).
+- Marketing photography is generated (emerald-branded, no stock library) and lives
+  in `frontend/public/manus/*.jpg`. `BrandImage` falls back to a brand gradient if
+  an asset is missing.
+- `NU1903` build warning comes from `Microsoft.OpenApi` 2.0.0, a transitive pin of
+  `Microsoft.AspNetCore.OpenApi` 10.0.10 — it only affects untrusted YAML parsing,
+  which this API doesn't do.
