@@ -25,11 +25,16 @@ const isDev = process.argv.includes("--dev") || !!process.env.CM_DEV;
 const DEV_URL = process.env.CM_DEV_URL || "http://localhost:5173";
 const APP_DIR = path.join(__dirname, "..", "app");
 
+// The deployed web app. The desktop shell loads this directly so UI changes ship
+// without a desktop rebuild; the bundled copy in app/ is the offline fallback.
+const PROD_URL = process.env.CM_APP_URL || "https://coremeet.urapp4u.com";
+
 const BRAND_BG = "#f7faf8";
 const BRAND_BG_DARK = "#0b130e";
 
 let mainWindow = null;
 let staticServer = null;
+let usedFallback = false;
 
 if (!app.requestSingleInstanceLock()) {
   app.quit();
@@ -55,15 +60,22 @@ async function main() {
   control = installControl(() => mainWindow, log);
   updater = installUpdater(log);
 
-  let startUrl;
-  if (isDev) {
-    startUrl = DEV_URL;
-  } else {
-    staticServer = await startStaticServer(APP_DIR);
-    startUrl = staticServer.origin;
-  }
-
+  const startUrl = isDev ? DEV_URL : PROD_URL;
   createWindow(startUrl);
+}
+
+// Offline fallback: if the hosted site can't be reached, serve the SPA that was
+// bundled at build time from a loopback static server.
+async function loadBundledFallback(reason) {
+  if (usedFallback || isDev || !mainWindow) return;
+  usedFallback = true;
+  try {
+    if (!staticServer) staticServer = await startStaticServer(APP_DIR);
+    log("falling back to bundled app:", reason, "->", staticServer.origin);
+    mainWindow.loadURL(staticServer.origin);
+  } catch (e) {
+    log("fallback failed:", e.message);
+  }
 }
 
 function createWindow(startUrl) {
@@ -90,8 +102,11 @@ function createWindow(startUrl) {
     mainWindow.show();
   });
   mainWindow.webContents.on("did-finish-load", () => log("did-finish-load"));
-  mainWindow.webContents.on("did-fail-load", (_e, code, desc, url) =>
-    log("did-fail-load", code, desc, url));
+  mainWindow.webContents.on("did-fail-load", (_e, code, desc, url, isMainFrame) => {
+    log("did-fail-load", code, desc, url);
+    // -3 is ERR_ABORTED (redirects / user navigation) — not a real failure.
+    if (isMainFrame && code !== -3) loadBundledFallback(`${code} ${desc}`);
+  });
   mainWindow.webContents.on("render-process-gone", (_e, d) =>
     log("render-process-gone", JSON.stringify(d)));
   if (isDev) mainWindow.webContents.openDevTools({ mode: "detach" });
@@ -107,13 +122,17 @@ function createWindow(startUrl) {
   }
 
   // External links open in the user's browser; never navigate away in-app.
-  const appOrigin = new URL(startUrl).origin;
+  // Internal = the hosted site, or the loopback fallback server.
+  const isInternalOrigin = (origin) =>
+    origin === new URL(PROD_URL).origin ||
+    origin === new URL(DEV_URL).origin ||
+    (staticServer && origin === staticServer.origin);
   mainWindow.webContents.setWindowOpenHandler(({ url }) => {
     if (/^https?:/.test(url)) shell.openExternal(url);
     return { action: "deny" };
   });
   mainWindow.webContents.on("will-navigate", (e, url) => {
-    if (new URL(url).origin !== appOrigin) {
+    if (!isInternalOrigin(new URL(url).origin)) {
       e.preventDefault();
       shell.openExternal(url);
     }
@@ -130,8 +149,9 @@ app.on("window-all-closed", () => {
   if (process.platform !== "darwin") app.quit();
 });
 app.on("activate", () => {
-  if (BrowserWindow.getAllWindows().length === 0 && staticServer) {
-    createWindow(staticServer.origin);
+  if (BrowserWindow.getAllWindows().length === 0) {
+    usedFallback = false;
+    createWindow(isDev ? DEV_URL : PROD_URL);
   }
 });
 app.on("before-quit", () => {

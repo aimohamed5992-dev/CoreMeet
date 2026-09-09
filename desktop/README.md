@@ -5,6 +5,15 @@ loading the same web UI and hitting the same backend. Unlike the browser, the
 desktop app can **share the screen natively** and **be remotely controlled** —
 input injection is built in, so no separate helper is needed.
 
+## Which URL it loads
+
+- **Production build** — loads the hosted site directly:
+  `https://coremeet.urapp4u.com` (override with `CM_APP_URL`). UI changes ship
+  the moment the website is redeployed — no desktop rebuild needed. If the site
+  is unreachable, it falls back to the copy of the SPA bundled at build time,
+  served over a loopback static server.
+- **Dev** (`npm run dev`) — `http://localhost:5173` (override with `CM_DEV_URL`).
+
 ## Develop
 
 ```bash
@@ -29,8 +38,9 @@ npm run dist:linux   # dist/CoreMeet-<v>-x86_64.AppImage
 ```
 
 Each script runs `npm run sync` first (frontend build → `app/`). Windows is
-cross-built from macOS (bundled Wine + NSIS). The bundled web UI points at the
-hosted API via `frontend/.env.production.local`.
+cross-built from macOS (bundled Wine + NSIS). `app/` is only the **offline
+fallback** — the app normally loads the hosted site. The fallback build points
+at the hosted API via `frontend/.env.production.local`.
 
 **Unsigned** (no certs): macOS Gatekeeper needs right-click → *Open* → *Open*;
 Windows SmartScreen needs *More info* → *Run anyway*. Set `CSC_LINK` /
@@ -47,9 +57,9 @@ restart; **Help → Check for Updates…** forces it. No-ops in dev.
 ## Layout
 
 ```
-src/main.js            app lifecycle, window, permissions, external links
+src/main.js            app lifecycle, window, permissions, external links, URL + offline fallback
 src/preload.js         window.coremeetDesktop bridge (isDesktop, screen picker, control)
-src/static-server.js   loopback static host for the bundled SPA (history-mode routing)
+src/static-server.js   loopback static host for the offline-fallback SPA (history-mode routing)
 src/menu.js            application menu
 scripts/sync-frontend.js  build the frontend and copy it into app/
 scripts/dev.js         dev runner
