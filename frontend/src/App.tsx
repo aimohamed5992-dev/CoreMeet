@@ -18,6 +18,9 @@ function JoinRedirect() {
   return <Navigate to={`/meeting/${code}`} replace />;
 }
 
+/** In the desktop app there's no marketing site — open straight to the app. */
+const isDesktopApp = "coremeetDesktop" in window;
+
 function RouteFallback() {
   return (
     <div style={{ minHeight: "100vh", display: "grid", placeItems: "center", background: "var(--room-bg)" }}>
@@ -30,7 +33,10 @@ export default function App() {
   return (
     <Routes>
       <Route element={<MarketingLayout />}>
-        <Route index element={<LandingPage />} />
+        <Route
+          index
+          element={isDesktopApp ? <Navigate to="/app" replace /> : <LandingPage />}
+        />
       </Route>
 
       <Route path="/login" element={<LoginPage />} />

@@ -404,12 +404,13 @@
     "beingControlled": "يتحكّم {{name}} في شاشتك الآن",
     "controllingHint": "أنت تتحكّم في شاشة {{name}} — اضغط Esc للإيقاف",
     "controllingAria": "التحكّم في شاشة {{name}}",
-    "agentMissing": "ثبّت وكيل CoreMeet للسماح بالإدخال",
-    "agentMissingLong": "وكيل التحكّم CoreMeet لا يعمل على هذا الجهاز. سيرى الطرف الآخر مؤشّرك لكنه لن يستطيع النقر أو الكتابة حتى تثبّت الوكيل وتشغّله.",
+    "agentMissing": "امنح صلاحية Accessibility للسماح بالإدخال",
+    "agentMissingLong": "يحتاج CoreMeet صلاحية Accessibility في ماك قبل أن يتمكّن من تحريك مؤشّرك أو الكتابة. فعّلها من إعدادات النظام ← الخصوصية والأمان ← Accessibility، وسيعمل بعدها.",
     "denied": {
-      "denied": "تم رفض الطلب",
+      "web_target": "التحكّم متاح فقط في تطبيق سطح المكتب",
       "busy": "هناك شخص آخر يتحكّم بالفعل",
-      "not_sharing": "توقّف عن مشاركة شاشته"
+      "not_sharing": "توقّف عن مشاركة شاشته",
+      "denied": "تم رفض الطلب"
     }
   }
 }

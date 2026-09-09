@@ -19,9 +19,10 @@ mobile/build/
 mobile/.dart_tool/
 mobile/ios/Pods/
 
-# ---- Electron agent (agent/ also has its own .gitignore) ----
-agent/dist/
-agent/out/
+# ---- Electron desktop app (desktop/ also has its own .gitignore) ----
+desktop/app/
+desktop/dist/
+desktop/out/
 
 # ---- Env ----
 .env

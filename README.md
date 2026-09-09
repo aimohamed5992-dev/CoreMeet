@@ -22,7 +22,8 @@ Sign in, start a meeting, share the code — everyone is talking face to face in
 
 - 🎥 **Full-mesh WebRTC** — peer-to-peer video & audio, adaptive tile grid
 - 🖥️ **Screen share** — the presenter takes the stage, everyone else moves to a side rail
-- 🖱️ **Remote control** — TeamViewer-style: a viewer drives the presenter's mouse & keyboard, with per-session consent and instant revoke (needs the [CoreMeet Control Agent](agent/))
+- 🖥️ **Desktop app** — Windows & macOS ([`desktop/`](desktop/), Electron), the full experience plus native screen share and built-in remote control
+- 🖱️ **Remote control** — TeamViewer-style: a viewer drives the presenter's mouse & keyboard, with per-session consent and an instant kill-switch. Works only when the person being controlled is on the **desktop app**
 - 🌍 **Arabic + English** — the whole app translated, full RTL, in-app language switcher (English by default)
 - 📱 **Flutter mobile app** — Android & iOS, same backend, same features ([`mobile/`](mobile/))
 - 🚪 **Pre-join lobby** — camera preview, device pickers, mic/camera set before you enter
@@ -59,7 +60,7 @@ Sign in, start a meeting, share the code — everyone is talking face to face in
 | **Backend** | ASP.NET Core Web API (.NET 10), EF Core 9 + **Pomelo** MySQL provider, SignalR |
 | **Frontend** | React 19 + Vite + TypeScript, `@microsoft/signalr`, `i18next` + `react-i18next`, `framer-motion` |
 | **Mobile** | Flutter (Android + iOS), Riverpod, `flutter_webrtc`, `signalr_netcore`, `gen-l10n` |
-| **Control agent** | Electron + `@nut-tree-fork/nut-js`, loopback WebSocket (Win / macOS / Linux) |
+| **Desktop** | Electron (Win + macOS), bundles the web UI; `desktopCapturer` screen share + `@nut-tree-fork/nut-js` input injection |
 | **Real-time** | SignalR for signaling, presence, chat & remote-control relay · WebRTC (`RTCPeerConnection`) for media |
 | **Database** | MySQL 8 / MariaDB 10.4+ |
 
@@ -69,7 +70,7 @@ CoreMeet/
 │   └── src/CoreMeet.Api
 ├── frontend/           React + Vite app (EN/AR, remote control UI)
 ├── mobile/             Flutter app — Android + iOS
-├── agent/              CoreMeet Control Agent (Electron) — injects remote input
+├── desktop/            Electron desktop app — Windows + macOS
 ├── infra/              docker-compose (MySQL + Adminer)
 ├── docs/screenshots/   images used in this README
 └── coremeet.sql        schema-only dump (alternative to EF migrations)
@@ -127,7 +128,8 @@ call — reusing a rotated token revokes the whole chain.
 
 | Client → server | Server → client |
 |---|---|
-| `JoinRoom(code, participantId)` | `roomPeers`, `peerJoined`, `peerLeft` |
+| `JoinRoom(code, participantId, client?)` | `roomPeers`, `peerJoined`, `peerLeft` |
+| `RenameMeeting(title)` (host) | `meetingRenamed` |
 | `SendChatMessage(text)` | `chatMessage` (also persisted) |
 | `SetMediaState(audio, video, screen)` | `peerMediaState` |
 | `SendOffer` / `SendAnswer` / `SendIceCandidate` | `offer` / `answer` / `iceCandidate` |
@@ -135,22 +137,28 @@ call — reusing a rotated token revokes the whole chain.
 
 ---
 
-## Remote control
+## Desktop app & remote control
 
-A viewer can drive the mouse & keyboard of whoever is sharing their screen —
-each session needs the sharer's explicit consent, shows a "being controlled"
-banner, and stops on Esc / the Stop button / disconnect. Only the active
-screen-sharer is a target, one controller at a time.
+The [`desktop/`](desktop/README.md) app (Electron, Windows + macOS) is the full
+CoreMeet UI plus two things a browser can't do:
 
-- **Protocol** — pointer/keyboard events are normalised to `0..1` of the shared
-  frame and relayed by the hub as opaque JSON; the hub enforces consent and
-  never needs screen dimensions.
-- **Injecting the input** — a browser can *send* control but can't move its own
-  OS pointer, so the person being controlled runs the **[CoreMeet Control
-  Agent](agent/)** (Electron + nut.js, loopback WebSocket on `127.0.0.1:47800`).
-- **Platform reality** — browser & the Flutter app can *control* others;
-  **Windows / macOS / Linux(X11)** can be controlled via the agent;
-  **iOS can never be controlled** (no input-injection API).
+- **Native screen share** — `desktopCapturer` with a source picker (the OS-native
+  picker on macOS 14.4+ / Windows).
+- **Remote control** — a viewer drives the presenter's mouse & keyboard. Each
+  session needs the sharer's explicit consent, shows a "being controlled" banner,
+  and has an instant kill-switch (Controls → Pause). Pointer/keyboard events are
+  normalised to `0..1` of the shared frame and relayed by the hub as opaque JSON;
+  `@nut-tree-fork/nut-js` in the Electron main process injects them.
+
+**Only the desktop app can be a control *target*** — the hub rejects
+`RequestControl` against a browser (`client` != `"desktop"`) with `web_target`.
+Anyone (browser, mobile, desktop) can *drive* a desktop target. iOS can never be
+controlled.
+
+```bash
+cd desktop && npm install && npm run dev        # dev
+npm run dist:mac   # or dist:win — full installer
+```
 
 ---
 
@@ -169,7 +177,7 @@ icons and the Cairo Arabic web font. English is the default, Arabic is opt-in.
 Flutter app in [`mobile/`](mobile/) for Android + iOS, hitting the same backend:
 auth, dashboard, create / join by code, lobby, WebRTC-mesh meeting room, chat,
 participants, host controls, EN/AR + RTL, and the **controller side** of remote
-control (drive a desktop's shared screen through the agent). See
+control (drive a desktop user's shared screen (they must be on the CoreMeet desktop app)). See
 [`mobile/README.md`](mobile/README.md).
 
 ```bash

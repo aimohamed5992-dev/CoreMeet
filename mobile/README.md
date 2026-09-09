@@ -124,7 +124,7 @@ camera preview starts in the room.
   `ControlOverlay` captures touches (drag → move, tap → click, long-press →
   right-click, double-tap → dbl-click) and an on-screen keyboard, encodes them
   as the same `ControlEvent` JSON the web uses, and relays via `SendControlEvent`
-  — the desktop's **CoreMeet Control Agent** does the injection.
+  — the person being controlled must be on the **CoreMeet desktop app**, which does the injection.
 - **Remote control — target side**: consent dialog on `controlRequested` +
   a "being controlled" banner with instant Stop.
 

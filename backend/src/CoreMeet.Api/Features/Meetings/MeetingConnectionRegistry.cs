@@ -12,6 +12,9 @@ public record ConnectionInfo(
 {
     /// <summary>Whether this connection is currently sharing its screen (from the last <c>SetMediaState</c>).</summary>
     public bool SharingScreen { get; set; }
+
+    /// <summary>True for the CoreMeet desktop app — only it can be a remote-control target.</summary>
+    public bool IsDesktop { get; set; }
 }
 
 /// <summary>

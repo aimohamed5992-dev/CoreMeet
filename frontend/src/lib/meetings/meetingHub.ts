@@ -8,7 +8,14 @@ export type RoomPeer = {
   displayName: string;
   avatarColor?: string;
   avatarUrl?: string | null;
+  desktop?: boolean;
 };
+
+/** "desktop" for the CoreMeet desktop app; undefined for a browser. */
+const clientKind = () =>
+  (window as unknown as { coremeetDesktop?: unknown }).coremeetDesktop
+    ? "desktop"
+    : null;
 export type PeerJoined = RoomPeer & { avatarColor: string; role: string };
 export type PeerLeft = { connectionId: string; participantId: string };
 
@@ -65,7 +72,7 @@ export class MeetingHub {
   }
 
   joinRoom(code: string, participantId: string) {
-    return this.connection.invoke("JoinRoom", code, participantId);
+    return this.connection.invoke("JoinRoom", code, participantId, clientKind());
   }
 
   leaveRoom() {

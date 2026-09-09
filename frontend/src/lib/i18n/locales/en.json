@@ -404,12 +404,13 @@
     "beingControlled": "{{name}} is controlling your screen",
     "controllingHint": "You’re controlling {{name}}’s screen — press Esc to stop",
     "controllingAria": "Controlling {{name}}’s screen",
-    "agentMissing": "Install the CoreMeet agent to allow input",
-    "agentMissingLong": "The CoreMeet Control Agent isn’t running on this device. The other person will see your cursor but won’t be able to click or type until you install and start the agent.",
+    "agentMissing": "Grant Accessibility access to allow input",
+    "agentMissingLong": "CoreMeet needs macOS Accessibility permission before it can move your pointer or type. Grant it in System Settings → Privacy & Security → Accessibility, then this will work.",
     "denied": {
-      "denied": "Request declined",
+      "web_target": "Only the desktop app can be controlled",
       "busy": "Someone else is already controlling",
-      "not_sharing": "They stopped sharing their screen"
+      "not_sharing": "They stopped sharing their screen",
+      "denied": "Request declined"
     }
   }
 }

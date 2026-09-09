@@ -14,8 +14,10 @@ public class MeetingHub(AppDbContext db, MeetingConnectionRegistry registry, Con
 {
     // ---- Presence -------------------------------------------------
 
-    public async Task JoinRoom(string code, Guid participantId)
+    public async Task JoinRoom(string code, Guid participantId, string? client = null)
     {
+        var isDesktop = string.Equals(client, "desktop", StringComparison.OrdinalIgnoreCase);
+
         var participant = await db.MeetingParticipants
             .Include(p => p.Meeting)
             .Include(p => p.User)
@@ -37,11 +39,18 @@ public class MeetingHub(AppDbContext db, MeetingConnectionRegistry registry, Con
         var avatarUrl = participant.User?.AvatarUrl ?? participant.AvatarUrl;
 
         var peers = registry.InRoom(code)
-            .Select(c => new { c.ConnectionId, c.ParticipantId, c.DisplayName, c.AvatarColor, c.AvatarUrl })
+            .Select(c => new
+            {
+                c.ConnectionId, c.ParticipantId, c.DisplayName, c.AvatarColor, c.AvatarUrl,
+                desktop = c.IsDesktop,
+            })
             .ToList();
 
         registry.Add(new ConnectionInfo(
-            Context.ConnectionId, code, participantId, participant.DisplayName, avatarColor, avatarUrl));
+            Context.ConnectionId, code, participantId, participant.DisplayName, avatarColor, avatarUrl)
+        {
+            IsDesktop = isDesktop,
+        });
 
         // Tell the newcomer who's already here (they will initiate the WebRTC offers).
         await Clients.Caller.SendAsync("roomPeers", peers);
@@ -67,6 +76,7 @@ public class MeetingHub(AppDbContext db, MeetingConnectionRegistry registry, Con
             avatarColor,
             avatarUrl,
             role = participant.Role.ToString(),
+            desktop = isDesktop,
         };
         await Clients.OthersInGroup(code).SendAsync("peerJoined", payload);
     }
@@ -210,6 +220,12 @@ public class MeetingHub(AppDbContext db, MeetingConnectionRegistry registry, Con
         if (me is null || target is null || me.Code != target.Code || targetConnectionId == Context.ConnectionId)
             return;
 
+        if (!target.IsDesktop)
+        {
+            // Only the CoreMeet desktop app can inject input — a browser can't be a target.
+            await Clients.Caller.SendAsync("controlDenied", targetConnectionId, "web_target");
+            return;
+        }
         if (!target.SharingScreen)
         {
             await Clients.Caller.SendAsync("controlDenied", targetConnectionId, "not_sharing");

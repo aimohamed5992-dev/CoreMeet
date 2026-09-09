@@ -160,7 +160,12 @@ export default function MeetingPage({
   const others = presenter ? allTiles.filter((t) => t !== presenter) : allTiles;
   const connectedCount = room.participants.filter((p) => p.isConnected).length;
 
-  const canRequestControl = !!presenter && !presenter.isSelf && !control.controlledBy;
+  // Only the CoreMeet desktop app can be a remote-control target.
+  const canRequestControl =
+    !!presenter &&
+    !presenter.isSelf &&
+    !control.controlledBy &&
+    control.desktopPeers.has(presenter.key);
   const controllingPresenter =
     !!presenter && !presenter.isSelf && control.controlling?.connectionId === presenter.key;
   const requestControl = () => presenter && !presenter.isSelf && control.request(presenter.key);

@@ -25,6 +25,8 @@ export type ControlState = {
   stop: () => void;
   /** Room-wide sessions, keyed by target connection id. */
   sessions: Record<string, { controllerConnectionId: string; controllerName: string }>;
+  /** Connection ids running the CoreMeet desktop app — only these can be controlled. */
+  desktopPeers: Set<string>;
   /** Target subscribes here to receive incoming control events. */
   onEvent: (cb: ((json: string) => void) | null) => void;
 };
@@ -74,8 +76,13 @@ export function useMeetingRoom(code: string, { localStream, mediaSettled, guest 
   const [ctlRequestState, setCtlRequestState] = useState<"idle" | "requesting" | "denied">("idle");
   const [ctlDeniedReason, setCtlDeniedReason] = useState<string | null>(null);
   const [ctlSessions, setCtlSessions] = useState<Record<string, { controllerConnectionId: string; controllerName: string }>>({});
+  const [desktopPeers, setDesktopPeers] = useState<Set<string>>(() => new Set());
   const ctlPendingRequester = useRef<string | null>(null);
   const ctlEventCb = useRef<((json: string) => void) | null>(null);
+
+  const markDesktop = useCallback((connectionId: string) => {
+    setDesktopPeers((prev) => (prev.has(connectionId) ? prev : new Set(prev).add(connectionId)));
+  }, []);
 
   const hubRef = useRef<MeetingHub | null>(null);
   const meshRef = useRef<PeerMesh | null>(null);
@@ -119,15 +126,16 @@ export function useMeetingRoom(code: string, { localStream, mediaSettled, guest 
         setParticipants(joined.meeting.participants);
 
         hub.on("roomPeers", (peers: RoomPeer[]) =>
-          peers.forEach((peer) =>
+          peers.forEach((peer) => {
             upsertParticipant({
               id: peer.participantId,
               displayName: peer.displayName,
               avatarColor: peer.avatarColor,
               avatarUrl: peer.avatarUrl ?? null,
               isConnected: true,
-            }),
-          ),
+            });
+            if (peer.desktop) markDesktop(peer.connectionId);
+          }),
         );
         hub.on("peerJoined", (peer: PeerJoined) => {
           upsertParticipant({
@@ -137,6 +145,7 @@ export function useMeetingRoom(code: string, { localStream, mediaSettled, guest 
             avatarUrl: peer.avatarUrl ?? null,
             isConnected: true,
           });
+          if (peer.desktop) markDesktop(peer.connectionId);
           announce(); // so the newcomer's tiles reflect our mic/camera/screen
         });
         hub.on("peerLeft", (peer: PeerLeft) => {
@@ -321,6 +330,7 @@ export function useMeetingRoom(code: string, { localStream, mediaSettled, guest 
     sendEvent: ctlSendEvent,
     stop: ctlStop,
     sessions: ctlSessions,
+    desktopPeers,
     onEvent: ctlOnEvent,
   };
 
