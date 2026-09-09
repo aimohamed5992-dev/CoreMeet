@@ -1,13 +1,28 @@
 # ---- .NET ----
 bin/
 obj/
+publish/
+backend/publish*/
+backend/*.tar.gz
 *.user
 appsettings.*.local.json
 
 # ---- Node / Vite ----
 node_modules/
 frontend/dist/
+frontend/coremeet-frontend-dist/
+frontend/coremeet-frontend-dist.zip
 *.local
+
+# ---- Flutter (mobile/ also has its own .gitignore) ----
+mobile/build/
+mobile/.dart_tool/
+mobile/ios/Pods/
+
+# ---- Electron desktop app (desktop/ also has its own .gitignore) ----
+desktop/app/
+desktop/dist/
+desktop/out/
 
 # ---- Env ----
 .env

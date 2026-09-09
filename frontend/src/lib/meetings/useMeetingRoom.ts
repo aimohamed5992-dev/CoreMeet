@@ -9,6 +9,28 @@ type ConnState = "connecting" | "connected" | "reconnecting" | "disconnected" | 
 export type RemoteFeed = { connectionId: string; participantId?: string; stream: MediaStream };
 export type RemoteMediaState = { audio: boolean; video: boolean; screen: boolean };
 
+type Peer = { connectionId: string; name: string };
+export type ControlState = {
+  /** Incoming request while I'm sharing my screen. */
+  incomingRequest: Peer | null;
+  respondRequest: (granted: boolean) => void;
+  /** Someone is actively controlling my screen. */
+  controlledBy: Peer | null;
+  /** I am actively controlling someone's screen. */
+  controlling: Peer | null;
+  requestState: "idle" | "requesting" | "denied";
+  deniedReason: string | null;
+  request: (targetConnectionId: string) => void;
+  sendEvent: (json: string) => void;
+  stop: () => void;
+  /** Room-wide sessions, keyed by target connection id. */
+  sessions: Record<string, { controllerConnectionId: string; controllerName: string }>;
+  /** Connection ids running the CoreMeet desktop app — only these can be controlled. */
+  desktopPeers: Set<string>;
+  /** Target subscribes here to receive incoming control events. */
+  onEvent: (cb: ((json: string) => void) | null) => void;
+};
+
 export type MeetingRoom = {
   meeting: MeetingDetail | null;
   me: Participant | null;
@@ -22,6 +44,8 @@ export type MeetingRoom = {
   replaceOutgoingVideo: (track: MediaStreamTrack | null) => void;
   replaceOutgoingAudio: (track: MediaStreamTrack | null) => void;
   broadcastMediaState: (audio: boolean, video: boolean, screen: boolean) => void;
+  renameMeeting: (title: string) => void;
+  control: ControlState;
 };
 
 type Options = {
@@ -45,6 +69,20 @@ export function useMeetingRoom(code: string, { localStream, mediaSettled, guest 
   const [remoteMedia, setRemoteMedia] = useState<Record<string, RemoteMediaState>>({});
   const [connState, setConnState] = useState<ConnState>("connecting");
   const [error, setError] = useState<string | null>(null);
+
+  const [ctlIncoming, setCtlIncoming] = useState<Peer | null>(null);
+  const [ctlControlledBy, setCtlControlledBy] = useState<Peer | null>(null);
+  const [ctlControlling, setCtlControlling] = useState<Peer | null>(null);
+  const [ctlRequestState, setCtlRequestState] = useState<"idle" | "requesting" | "denied">("idle");
+  const [ctlDeniedReason, setCtlDeniedReason] = useState<string | null>(null);
+  const [ctlSessions, setCtlSessions] = useState<Record<string, { controllerConnectionId: string; controllerName: string }>>({});
+  const [desktopPeers, setDesktopPeers] = useState<Set<string>>(() => new Set());
+  const ctlPendingRequester = useRef<string | null>(null);
+  const ctlEventCb = useRef<((json: string) => void) | null>(null);
+
+  const markDesktop = useCallback((connectionId: string) => {
+    setDesktopPeers((prev) => (prev.has(connectionId) ? prev : new Set(prev).add(connectionId)));
+  }, []);
 
   const hubRef = useRef<MeetingHub | null>(null);
   const meshRef = useRef<PeerMesh | null>(null);
@@ -88,15 +126,16 @@ export function useMeetingRoom(code: string, { localStream, mediaSettled, guest 
         setParticipants(joined.meeting.participants);
 
         hub.on("roomPeers", (peers: RoomPeer[]) =>
-          peers.forEach((peer) =>
+          peers.forEach((peer) => {
             upsertParticipant({
               id: peer.participantId,
               displayName: peer.displayName,
               avatarColor: peer.avatarColor,
               avatarUrl: peer.avatarUrl ?? null,
               isConnected: true,
-            }),
-          ),
+            });
+            if (peer.desktop) markDesktop(peer.connectionId);
+          }),
         );
         hub.on("peerJoined", (peer: PeerJoined) => {
           upsertParticipant({
@@ -106,6 +145,7 @@ export function useMeetingRoom(code: string, { localStream, mediaSettled, guest 
             avatarUrl: peer.avatarUrl ?? null,
             isConnected: true,
           });
+          if (peer.desktop) markDesktop(peer.connectionId);
           announce(); // so the newcomer's tiles reflect our mic/camera/screen
         });
         hub.on("peerLeft", (peer: PeerLeft) => {
@@ -127,7 +167,57 @@ export function useMeetingRoom(code: string, { localStream, mediaSettled, guest 
         hub.on("chatMessage", (msg: ChatMessage) =>
           setMessages((prev) => (prev.some((m) => m.id === msg.id) ? prev : [...prev, msg])),
         );
+        hub.on("meetingRenamed", (payload: { title: string }) =>
+          setMeeting((prev) => (prev ? { ...prev, title: payload.title } : prev)),
+        );
         hub.on("error", (message: string) => setError(message));
+
+        // ---- remote control ----
+        hub.on("controlRequested", (r: { connectionId: string; name: string }) => {
+          ctlPendingRequester.current = r.connectionId;
+          setCtlIncoming({ connectionId: r.connectionId, name: r.name });
+        });
+        hub.on("controlDenied", (_target: string, reason: string) => {
+          setCtlRequestState("denied");
+          setCtlDeniedReason(reason);
+          setCtlControlling(null);
+        });
+        hub.on("controlResponse", (byConnectionId: string, granted: boolean) => {
+          if (granted) {
+            setCtlRequestState("idle");
+            setCtlControlling((prev) => prev ?? { connectionId: byConnectionId, name: "" });
+          } else {
+            setCtlRequestState("denied");
+            setCtlDeniedReason("denied");
+            setCtlControlling(null);
+          }
+        });
+        hub.on("controlGranted", (controllerConnectionId: string, name: string) => {
+          setCtlControlledBy({ connectionId: controllerConnectionId, name });
+          setCtlIncoming(null);
+          ctlPendingRequester.current = null;
+        });
+        hub.on("controlEnded", () => {
+          setCtlControlledBy(null);
+          setCtlControlling(null);
+          setCtlRequestState("idle");
+          setCtlIncoming(null);
+          ctlPendingRequester.current = null;
+        });
+        hub.on("controlEvent", (json: string) => ctlEventCb.current?.(json));
+        hub.on("controlSessions", (list: { targetConnectionId: string; controllerConnectionId: string; controllerName: string }[]) =>
+          setCtlSessions(Object.fromEntries(list.map((s) => [s.targetConnectionId, { controllerConnectionId: s.controllerConnectionId, controllerName: s.controllerName }]))),
+        );
+        hub.on("controlStarted", (s: { targetConnectionId: string; controllerConnectionId: string; controllerName: string }) =>
+          setCtlSessions((prev) => ({ ...prev, [s.targetConnectionId]: { controllerConnectionId: s.controllerConnectionId, controllerName: s.controllerName } })),
+        );
+        hub.on("controlStopped", (s: { targetConnectionId: string }) =>
+          setCtlSessions((prev) => {
+            const next = { ...prev };
+            delete next[s.targetConnectionId];
+            return next;
+          }),
+        );
 
         hub.onReconnected(async () => {
           setConnState("connected");
@@ -190,6 +280,60 @@ export function useMeetingRoom(code: string, { localStream, mediaSettled, guest 
     hubRef.current?.setMediaState(audio, video, screen);
   }, []);
 
+  const renameMeeting = useCallback((title: string) => {
+    const trimmed = title.trim();
+    if (!trimmed) return;
+    setMeeting((prev) => (prev ? { ...prev, title: trimmed } : prev)); // optimistic
+    hubRef.current?.renameMeeting(trimmed);
+  }, []);
+
+  // ---- control actions ----
+  const ctlRequest = useCallback((targetConnectionId: string) => {
+    setCtlRequestState("requesting");
+    setCtlDeniedReason(null);
+    setCtlControlling({ connectionId: targetConnectionId, name: "" });
+    hubRef.current?.requestControl(targetConnectionId);
+  }, []);
+
+  const ctlRespond = useCallback((granted: boolean) => {
+    const requester = ctlPendingRequester.current;
+    if (requester) hubRef.current?.respondControl(requester, granted);
+    if (!granted) {
+      setCtlIncoming(null);
+      ctlPendingRequester.current = null;
+    }
+  }, []);
+
+  const ctlSendEvent = useCallback((json: string) => {
+    hubRef.current?.sendControlEvent(json);
+  }, []);
+
+  const ctlStop = useCallback(() => {
+    hubRef.current?.revokeControl();
+    setCtlControlledBy(null);
+    setCtlControlling(null);
+    setCtlRequestState("idle");
+  }, []);
+
+  const ctlOnEvent = useCallback((cb: ((json: string) => void) | null) => {
+    ctlEventCb.current = cb;
+  }, []);
+
+  const control: ControlState = {
+    incomingRequest: ctlIncoming,
+    respondRequest: ctlRespond,
+    controlledBy: ctlControlledBy,
+    controlling: ctlControlling,
+    requestState: ctlRequestState,
+    deniedReason: ctlDeniedReason,
+    request: ctlRequest,
+    sendEvent: ctlSendEvent,
+    stop: ctlStop,
+    sessions: ctlSessions,
+    desktopPeers,
+    onEvent: ctlOnEvent,
+  };
+
   return {
     meeting,
     me,
@@ -200,8 +344,10 @@ export function useMeetingRoom(code: string, { localStream, mediaSettled, guest 
     connState,
     error,
     sendMessage,
+    renameMeeting,
     replaceOutgoingVideo,
     replaceOutgoingAudio,
     broadcastMediaState,
+    control,
   };
 }

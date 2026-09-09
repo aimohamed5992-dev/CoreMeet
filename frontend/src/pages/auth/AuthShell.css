@@ -62,10 +62,19 @@
 
 /* ---- Form panel ---- */
 .auth__panel {
+  position: relative;
   display: grid;
   place-items: center;
   padding: 40px 24px;
   background: var(--bg);
+}
+.auth__toggles {
+  position: absolute;
+  top: 20px;
+  inset-inline-end: 24px;
+  display: flex;
+  gap: 8px;
+  z-index: 2;
 }
 .auth__card {
   width: 100%;
@@ -99,6 +108,18 @@
 .auth__footer a { color: var(--primary); font-weight: 600; }
 
 .auth__hint { font-size: 0.8rem; color: var(--text-muted); }
+
+.pwfield { position: relative; }
+.pwfield__input { width: 100%; padding-inline-end: 64px; }
+.pwfield__toggle {
+  position: absolute;
+  inset-inline-end: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--text-muted);
+}
 
 @media (max-width: 860px) {
   .auth { grid-template-columns: 1fr; }

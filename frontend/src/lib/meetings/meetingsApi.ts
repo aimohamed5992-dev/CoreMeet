@@ -25,6 +25,14 @@ export const meetingsApi = {
     return data;
   },
 
+  async rename(code: string, title: string) {
+    const { data } = await api.put<{ title: string }>(
+      `/api/meetings/${encodeURIComponent(code)}`,
+      { title },
+    );
+    return data.title;
+  },
+
   async end(code: string) {
     await api.post(`/api/meetings/${encodeURIComponent(code)}/end`);
   },

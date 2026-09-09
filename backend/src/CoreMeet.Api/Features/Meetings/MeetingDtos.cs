@@ -9,6 +9,12 @@ public record CreateMeetingRequest
     public string? Title { get; init; }
 }
 
+public record RenameMeetingRequest
+{
+    [Required, StringLength(200, MinimumLength = 1)]
+    public string Title { get; init; } = string.Empty;
+}
+
 public record JoinMeetingRequest
 {
     /// <summary>Required when joining without an account (guest). Ignored for authenticated users.</summary>

@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { useAuth } from "../../lib/auth/AuthContext";
 import type { MediaControls } from "../../lib/meetings/useMeetingMedia";
 import { useMeetingRoom } from "../../lib/meetings/useMeetingRoom";
@@ -7,10 +8,15 @@ import { meetingsApi } from "../../lib/meetings/meetingsApi";
 import type { Participant } from "../../lib/meetings/types";
 import Logo from "../../components/Logo";
 import ThemeToggle from "../../components/ThemeToggle";
+import LanguageToggle from "../../components/LanguageToggle";
 import VideoTile from "./VideoTile";
+import EditableMeetingTitle from "./EditableMeetingTitle";
 import ParticipantsPanel from "./ParticipantsPanel";
 import ChatPanel from "./ChatPanel";
 import DeviceMenu from "./DeviceMenu";
+import ControlLayer from "./ControlLayer";
+import ControlBanner from "./ControlBanner";
+import { useControlAgent } from "../../lib/meetings/useControlAgent";
 import {
   MicIcon, MicOffIcon, CamIcon, CamOffIcon,
   PresentIcon, PresentOffIcon, ChatIcon, PeopleIcon, CallEndIcon, TuneIcon, LinkIcon,
@@ -29,6 +35,7 @@ export default function MeetingPage({
   guest?: { displayName: string; avatarUrl: string | null };
 }) {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const { user, status } = useAuth();
   const room = useMeetingRoom(code, { localStream: media.stream, mediaSettled: media.ready, guest });
   const { replaceOutgoingVideo, replaceOutgoingAudio, broadcastMediaState } = room;
@@ -38,6 +45,25 @@ export default function MeetingPage({
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [copied, setCopied] = useState(false);
   const settingsRef = useRef<HTMLDivElement>(null);
+  const spotlightRef = useRef<HTMLDivElement>(null);
+
+  const { control } = room;
+  // Probe for the local agent while a request is pending too, so the consent
+  // prompt can warn if input injection won't be possible.
+  const agent = useControlAgent(
+    !!control.controlledBy || !!control.incomingRequest,
+    control.controlledBy?.name ?? null,
+  );
+
+  // While my screen is being driven, forward each relayed event to the local agent.
+  useEffect(() => {
+    if (!control.controlledBy) {
+      control.onEvent(null);
+      return;
+    }
+    control.onEvent((json) => agent.send(json));
+    return () => control.onEvent(null);
+  }, [control, control.controlledBy, agent]);
 
   useEffect(() => {
     onVideoTrackChanged(replaceOutgoingVideo);
@@ -84,7 +110,7 @@ export default function MeetingPage({
 
   const leave = () => navigate(status === "authenticated" ? "/app" : "/");
   const endMeeting = async () => {
-    if (!window.confirm("End the meeting for everyone?")) return;
+    if (!window.confirm(t("room.endConfirm"))) return;
     await meetingsApi.end(code).catch(() => undefined);
     navigate("/app");
   };
@@ -93,9 +119,9 @@ export default function MeetingPage({
     return (
       <div className="room room--message">
         <Logo size={32} />
-        <h1>Can’t join this meeting</h1>
-        <p>{room.error ?? "The meeting link may be invalid or the meeting has ended."}</p>
-        <button className="btn btn--primary" onClick={leave}>Back to CoreMeet</button>
+        <h1>{t("room.cantJoinTitle")}</h1>
+        <p>{room.error ?? t("room.cantJoinText")}</p>
+        <button className="btn btn--primary" onClick={leave}>{t("common.backToCoreMeet")}</button>
       </div>
     );
   }
@@ -104,7 +130,7 @@ export default function MeetingPage({
   const selfTile = {
     key: "self",
     stream: media.stream,
-    name: `${room.me?.displayName ?? guest?.displayName ?? user?.name ?? "You"}`,
+    name: `${room.me?.displayName ?? guest?.displayName ?? user?.name ?? t("common.you")}`,
     avatarColor: room.me?.avatarColor ?? user?.avatarColor ?? "#1FA84C",
     avatarUrl: room.me?.avatarUrl ?? user?.avatarUrl ?? guest?.avatarUrl ?? null,
     isSelf: true,
@@ -119,7 +145,7 @@ export default function MeetingPage({
     return {
       key: feed.connectionId,
       stream: feed.stream,
-      name: p?.displayName ?? "Guest",
+      name: p?.displayName ?? t("common.guest"),
       avatarColor: p?.avatarColor ?? "#667a6f",
       avatarUrl: p?.avatarUrl ?? null,
       isSelf: false,
@@ -133,6 +159,16 @@ export default function MeetingPage({
   const presenter = allTiles.find((t) => t.screen) ?? null;
   const others = presenter ? allTiles.filter((t) => t !== presenter) : allTiles;
   const connectedCount = room.participants.filter((p) => p.isConnected).length;
+
+  // Only the CoreMeet desktop app can be a remote-control target.
+  const canRequestControl =
+    !!presenter &&
+    !presenter.isSelf &&
+    !control.controlledBy &&
+    control.desktopPeers.has(presenter.key);
+  const controllingPresenter =
+    !!presenter && !presenter.isSelf && control.controlling?.connectionId === presenter.key;
+  const requestControl = () => presenter && !presenter.isSelf && control.request(presenter.key);
 
   const renderTile = (t: (typeof allTiles)[number], big = false) => (
     <VideoTile
@@ -156,26 +192,64 @@ export default function MeetingPage({
       <header className="room__top">
         <Logo size={22} />
         <div className="room__meta">
-          <strong>{room.meeting?.title ?? "Meeting"}</strong>
-          <button className="room__code" onClick={copyLink} title="Copy meeting link">
-            <LinkIcon width={14} height={14} /> {copied ? "Link copied" : code}
+          <EditableMeetingTitle
+            title={room.meeting?.title ?? t("room.meeting")}
+            canEdit={isHost}
+            onRename={room.renameMeeting}
+          />
+          <button className="room__code" onClick={copyLink} title={t("room.copyLink")}>
+            <LinkIcon width={14} height={14} /> {copied ? t("room.linkCopied") : code}
           </button>
         </div>
         <div className="room__top-right">
+          <LanguageToggle className="room__theme" />
           <ThemeToggle className="room__theme" />
           <span className={`room__status room__status--${room.connState}`}>
-            {room.connState === "connected" ? "Live" : room.connState}
+            {room.connState === "connected" ? t("common.live") : t(`common.${room.connState}`)}
           </span>
         </div>
       </header>
 
       {media.error && <div className="room__banner">{media.error}</div>}
 
+      <ControlBanner
+        incomingRequest={control.incomingRequest}
+        onRespond={control.respondRequest}
+        controlledBy={control.controlledBy}
+        onStop={control.stop}
+        agentStatus={agent.status}
+      />
+
       <div className="room__body">
         <main className={`room__stage ${presenter ? "room__stage--present" : ""}`}>
           {presenter ? (
             <>
-              <div className="room__spotlight">{renderTile(presenter, true)}</div>
+              <div className="room__spotlight" ref={spotlightRef}>
+                {renderTile(presenter, true)}
+                {controllingPresenter && (
+                  <ControlLayer
+                    getVideo={() => spotlightRef.current?.querySelector("video") ?? null}
+                    onEvent={control.sendEvent}
+                    onStop={control.stop}
+                    targetName={presenter.name}
+                  />
+                )}
+                {canRequestControl && !controllingPresenter && (
+                  <button
+                    className="room__ctl-request"
+                    onClick={requestControl}
+                    disabled={control.requestState === "requesting"}
+                  >
+                    {control.requestState === "requesting"
+                      ? t("control.requesting")
+                      : control.requestState === "denied"
+                        ? t(`control.denied.${control.deniedReason ?? "denied"}`, {
+                            defaultValue: t("control.denied.denied"),
+                          })
+                        : t("control.request")}
+                  </button>
+                )}
+              </div>
               <div className="room__rail">{others.map((t) => renderTile(t))}</div>
             </>
           ) : (
@@ -185,7 +259,7 @@ export default function MeetingPage({
           )}
           {allTiles.length === 1 && !presenter && (
             <p className="room__solo">
-              You’re the only one here. <button onClick={copyLink}>Copy the link</button> to invite people.
+              {t("room.soloText")} <button onClick={copyLink}>{t("room.copyTheLink")}</button> {t("room.soloTail")}
             </p>
           )}
         </main>
@@ -213,7 +287,7 @@ export default function MeetingPage({
           className={`meet-btn ${media.audioOn ? "" : "meet-btn--off"}`}
           onClick={media.toggleAudio}
           disabled={!media.stream}
-          title="Turn microphone on/off (m)"
+          title={t("room.micTitle")}
         >
           {media.audioOn ? <MicIcon /> : <MicOffIcon />}
         </button>
@@ -221,7 +295,7 @@ export default function MeetingPage({
           className={`meet-btn ${media.videoOn ? "" : "meet-btn--off"}`}
           onClick={media.toggleVideo}
           disabled={!media.stream}
-          title="Turn camera on/off (e)"
+          title={t("room.camTitle")}
         >
           {media.videoOn ? <CamIcon /> : <CamOffIcon />}
         </button>
@@ -229,7 +303,7 @@ export default function MeetingPage({
           className={`meet-btn ${media.sharingScreen ? "meet-btn--active" : ""}`}
           onClick={media.toggleScreenShare}
           disabled={!media.stream}
-          title={media.sharingScreen ? "Stop presenting" : "Present now"}
+          title={media.sharingScreen ? t("room.stopPresentTitle") : t("room.presentTitle")}
         >
           {media.sharingScreen ? <PresentOffIcon /> : <PresentIcon />}
         </button>
@@ -238,7 +312,7 @@ export default function MeetingPage({
           <button
             className={`meet-btn ${settingsOpen ? "meet-btn--active" : ""}`}
             onClick={() => setSettingsOpen((v) => !v)}
-            title="Settings"
+            title={t("room.settingsTitle")}
           >
             <TuneIcon />
           </button>
@@ -252,7 +326,7 @@ export default function MeetingPage({
         <button
           className={`meet-btn ${panel === "people" ? "meet-btn--active" : ""}`}
           onClick={() => setPanel((p) => (p === "people" ? "none" : "people"))}
-          title="Show everyone"
+          title={t("room.peopleTitle")}
         >
           <PeopleIcon />
           <span className="meet-btn__badge">{connectedCount}</span>
@@ -260,12 +334,12 @@ export default function MeetingPage({
         <button
           className={`meet-btn ${panel === "chat" ? "meet-btn--active" : ""}`}
           onClick={() => setPanel((p) => (p === "chat" ? "none" : "chat"))}
-          title="Chat with everyone (c)"
+          title={t("room.chatTitle")}
         >
           <ChatIcon />
         </button>
 
-        <button className="meet-btn meet-btn--end" onClick={isHost ? endMeeting : leave} title="Leave call">
+        <button className="meet-btn meet-btn--end" onClick={isHost ? endMeeting : leave} title={t("room.leaveTitle")}>
           <CallEndIcon />
         </button>
       </footer>

@@ -125,6 +125,22 @@ public class MeetingService(AppDbContext db)
         return true;
     }
 
+    /// <summary>Host-only rename. Returns the new title, or null if not allowed / not found.</summary>
+    public async Task<string?> RenameAsync(string code, Guid userId, string? title, CancellationToken ct)
+    {
+        var trimmed = title?.Trim();
+        if (string.IsNullOrEmpty(trimmed)) return null;
+        if (trimmed.Length > 200) trimmed = trimmed[..200];
+
+        var meeting = await db.Meetings.FirstOrDefaultAsync(m => m.Code == code, ct);
+        if (meeting is null || meeting.HostId != userId || meeting.Status == MeetingStatus.Ended)
+            return null;
+
+        meeting.Title = trimmed;
+        await db.SaveChangesAsync(ct);
+        return trimmed;
+    }
+
     // ---- helpers ----------------------------------------------------
 
     private async Task<Meeting> ReloadAsync(Guid meetingId, CancellationToken ct) =>

@@ -1,0 +1,87 @@
+{
+  "name": "coremeet-desktop",
+  "productName": "CoreMeet",
+  "version": "0.1.0",
+  "private": true,
+  "description": "CoreMeet desktop app for Windows and macOS — the full meeting experience, plus screen control.",
+  "author": "CoreMeet",
+  "license": "MIT",
+  "main": "src/main.js",
+  "scripts": {
+    "sync": "node scripts/sync-frontend.js",
+    "dev": "node scripts/dev.js",
+    "start": "npm run sync && electron .",
+    "dist:mac": "npm run sync && electron-builder --mac",
+    "dist:win": "npm run sync && electron-builder --win",
+    "dist:linux": "npm run sync && electron-builder --linux"
+  },
+  "dependencies": {
+    "@nut-tree-fork/nut-js": "^4.2.0",
+    "electron-updater": "^6.3.9"
+  },
+  "devDependencies": {
+    "electron": "^33.0.0",
+    "electron-builder": "^25.1.8"
+  },
+  "build": {
+    "appId": "com.coremeet.desktop",
+    "productName": "CoreMeet",
+    "artifactName": "CoreMeet-${version}-${arch}.${ext}",
+    "files": [
+      "src/**/*",
+      "app/**/*",
+      "assets/**/*",
+      "package.json"
+    ],
+    "mac": {
+      "category": "public.app-category.business",
+      "target": [
+        {
+          "target": "dmg",
+          "arch": [
+            "universal"
+          ]
+        }
+      ],
+      "icon": "assets/icon.png",
+      "extendInfo": {
+        "NSCameraUsageDescription": "CoreMeet uses your camera so others in the meeting can see you.",
+        "NSMicrophoneUsageDescription": "CoreMeet uses your microphone so others in the meeting can hear you.",
+        "NSAccessibilityUsageDescription": "CoreMeet needs Accessibility access to move the pointer and type when you grant remote control of your screen."
+      }
+    },
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "assets/icon.png"
+    },
+    "linux": {
+      "target": [
+        "AppImage"
+      ],
+      "category": "Network",
+      "icon": "assets/icon.png"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true
+    },
+    "publish": [
+      {
+        "provider": "generic",
+        "url": "https://coremeet.urapp4u.com/desktop"
+      }
+    ],
+    "asarUnpack": [
+      "**/node_modules/@nut-tree-fork/**",
+      "**/*.node"
+    ]
+  }
+}

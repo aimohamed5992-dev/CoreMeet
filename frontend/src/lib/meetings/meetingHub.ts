@@ -8,7 +8,14 @@ export type RoomPeer = {
   displayName: string;
   avatarColor?: string;
   avatarUrl?: string | null;
+  desktop?: boolean;
 };
+
+/** "desktop" for the CoreMeet desktop app; undefined for a browser. */
+const clientKind = () =>
+  (window as unknown as { coremeetDesktop?: unknown }).coremeetDesktop
+    ? "desktop"
+    : null;
 export type PeerJoined = RoomPeer & { avatarColor: string; role: string };
 export type PeerLeft = { connectionId: string; participantId: string };
 
@@ -65,7 +72,7 @@ export class MeetingHub {
   }
 
   joinRoom(code: string, participantId: string) {
-    return this.connection.invoke("JoinRoom", code, participantId);
+    return this.connection.invoke("JoinRoom", code, participantId, clientKind());
   }
 
   leaveRoom() {
@@ -74,6 +81,10 @@ export class MeetingHub {
 
   sendChatMessage(content: string) {
     return this.connection.invoke("SendChatMessage", content);
+  }
+
+  renameMeeting(title: string) {
+    return this.connection.invoke("RenameMeeting", title).catch(() => undefined);
   }
 
   setMediaState(audio: boolean, video: boolean, screen: boolean) {
@@ -90,5 +101,22 @@ export class MeetingHub {
 
   sendIceCandidate(target: string, candidate: string) {
     return this.connection.invoke("SendIceCandidate", target, candidate).catch(() => undefined);
+  }
+
+  // ---- Remote screen control ----
+  requestControl(targetConnectionId: string) {
+    return this.connection.invoke("RequestControl", targetConnectionId).catch(() => undefined);
+  }
+
+  respondControl(requesterConnectionId: string, granted: boolean) {
+    return this.connection.invoke("RespondControl", requesterConnectionId, granted).catch(() => undefined);
+  }
+
+  sendControlEvent(json: string) {
+    return this.connection.invoke("SendControlEvent", json).catch(() => undefined);
+  }
+
+  revokeControl() {
+    return this.connection.invoke("RevokeControl").catch(() => undefined);
   }
 }
