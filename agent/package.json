@@ -1,0 +1,60 @@
+{
+  "name": "coremeet-control-agent",
+  "productName": "CoreMeet Control Agent",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Local helper that lets a CoreMeet participant grant remote mouse/keyboard control of this computer during a meeting.",
+  "main": "src/main.js",
+  "author": "CoreMeet",
+  "license": "MIT",
+  "scripts": {
+    "start": "electron .",
+    "test": "node --test 'test/**/*.test.mjs'",
+    "dist": "electron-builder",
+    "dist:mac": "electron-builder --mac",
+    "dist:win": "electron-builder --win",
+    "dist:linux": "electron-builder --linux"
+  },
+  "dependencies": {
+    "@nut-tree-fork/nut-js": "^4.2.0",
+    "ws": "^8.21.3"
+  },
+  "devDependencies": {
+    "electron": "^33.0.0",
+    "electron-builder": "^25.1.8"
+  },
+  "build": {
+    "appId": "com.coremeet.controlagent",
+    "productName": "CoreMeet Control Agent",
+    "files": [
+      "src/**/*",
+      "renderer/**/*",
+      "assets/**/*",
+      "package.json"
+    ],
+    "mac": {
+      "category": "public.app-category.utilities",
+      "target": [
+        "dmg",
+        "zip"
+      ],
+      "icon": "assets/icon.png",
+      "extendInfo": {
+        "NSAccessibilityUsageDescription": "CoreMeet needs Accessibility access to move the pointer and type on your behalf while you grant remote control in a meeting."
+      }
+    },
+    "win": {
+      "target": [
+        "nsis"
+      ],
+      "icon": "assets/icon.png"
+    },
+    "linux": {
+      "target": [
+        "AppImage"
+      ],
+      "category": "Utility",
+      "icon": "assets/icon.png"
+    }
+  }
+}

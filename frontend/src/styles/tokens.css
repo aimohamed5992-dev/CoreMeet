@@ -60,6 +60,7 @@
   /* Typography */
   --font-sans: "Inter", "Segoe UI", system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif;
   --font-display: "Sora", "Inter", system-ui, sans-serif;
+  --font-ar: "Cairo", "IBM Plex Sans Arabic", "Segoe UI", system-ui, sans-serif;
 
   /* Radii */
   --r-xs: 6px;

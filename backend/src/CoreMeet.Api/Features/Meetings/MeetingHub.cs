@@ -9,7 +9,7 @@ namespace CoreMeet.Api.Features.Meetings;
 /// Real-time meeting channel: presence, chat, and WebRTC signaling relay.
 /// Clients call <c>JoinRoom</c> first; everything else is scoped to that room.
 /// </summary>
-public class MeetingHub(AppDbContext db, MeetingConnectionRegistry registry) : Hub
+public class MeetingHub(AppDbContext db, MeetingConnectionRegistry registry, ControlRegistry control) : Hub
 {
     // ---- Presence -------------------------------------------------
 
@@ -44,6 +44,18 @@ public class MeetingHub(AppDbContext db, MeetingConnectionRegistry registry) : H
 
         // Tell the newcomer who's already here (they will initiate the WebRTC offers).
         await Clients.Caller.SendAsync("roomPeers", peers);
+
+        // Bring the newcomer up to speed on any active screen-control session.
+        var sessions = control.InRoom(code)
+            .Select(s => new
+            {
+                targetConnectionId = s.TargetConnectionId,
+                controllerConnectionId = s.ControllerConnectionId,
+                controllerName = s.ControllerName,
+            })
+            .ToList();
+        if (sessions.Count > 0)
+            await Clients.Caller.SendAsync("controlSessions", sessions);
 
         // Tell everyone else about the newcomer.
         var payload = new
@@ -87,6 +99,10 @@ public class MeetingHub(AppDbContext db, MeetingConnectionRegistry registry) : H
             }
         }
 
+        // Tear down any screen-control session this connection was part of.
+        foreach (var session in control.EndAllInvolving(Context.ConnectionId))
+            await NotifyControlEnded(session, Context.ConnectionId);
+
         await Groups.RemoveFromGroupAsync(Context.ConnectionId, info.Code);
         await Clients.Group(info.Code).SendAsync("peerLeft", new
         {
@@ -126,17 +142,130 @@ public class MeetingHub(AppDbContext db, MeetingConnectionRegistry registry) : H
 
     // ---- Media state (mic / camera on-off, shown on remote tiles) ----
 
-    public Task SetMediaState(bool audio, bool video, bool screen)
+    public async Task SetMediaState(bool audio, bool video, bool screen)
     {
         var info = registry.Get(Context.ConnectionId);
-        if (info is null) return Task.CompletedTask;
-        return Clients.OthersInGroup(info.Code).SendAsync("peerMediaState", new
+        if (info is null) return;
+
+        var wasSharing = info.SharingScreen;
+        info.SharingScreen = screen;
+
+        // Stopping a screen share immediately ends any control of it.
+        if (wasSharing && !screen)
+        {
+            var session = control.EndByTarget(Context.ConnectionId);
+            if (session is not null) await NotifyControlEnded(session, Context.ConnectionId);
+        }
+
+        await Clients.OthersInGroup(info.Code).SendAsync("peerMediaState", new
         {
             connectionId = Context.ConnectionId,
             participantId = info.ParticipantId,
             audio,
             video,
             screen,
+        });
+    }
+
+    // ---- Remote control of a shared screen ----------------------------
+    //
+    // A viewer requests control of the person sharing their screen; that person
+    // must explicitly grant it and can revoke it at any moment. Input events are
+    // relayed as opaque JSON strings (see the client contract):
+    //   { t:"move|down|up|click|dblclick", x,y }   coords normalised 0..1 of the shared frame
+    //   { t:"wheel", dx,dy,x,y }
+    //   { t:"key", code,key,down, mods:{ctrl,alt,shift,meta} }
+
+    private const int MaxControlEventBytes = 2048;
+
+    /// <summary>Ask the person sharing their screen (<paramref name="targetConnectionId"/>) for control.</summary>
+    public async Task RequestControl(string targetConnectionId)
+    {
+        var me = registry.Get(Context.ConnectionId);
+        var target = registry.Get(targetConnectionId);
+        if (me is null || target is null || me.Code != target.Code || targetConnectionId == Context.ConnectionId)
+            return;
+
+        if (!target.SharingScreen)
+        {
+            await Clients.Caller.SendAsync("controlDenied", targetConnectionId, "not_sharing");
+            return;
+        }
+        if (control.GetByTarget(targetConnectionId) is not null)
+        {
+            await Clients.Caller.SendAsync("controlDenied", targetConnectionId, "busy");
+            return;
+        }
+
+        await Clients.Client(targetConnectionId).SendAsync("controlRequested", new
+        {
+            connectionId = Context.ConnectionId,
+            participantId = me.ParticipantId,
+            name = me.DisplayName,
+        });
+    }
+
+    /// <summary>The person sharing responds to a pending control request.</summary>
+    public async Task RespondControl(string requesterConnectionId, bool granted)
+    {
+        var me = registry.Get(Context.ConnectionId); // the sharer
+        var requester = registry.Get(requesterConnectionId);
+        if (me is null || requester is null || me.Code != requester.Code)
+            return;
+
+        if (!granted || !me.SharingScreen)
+        {
+            await Clients.Client(requesterConnectionId).SendAsync("controlResponse", Context.ConnectionId, false);
+            return;
+        }
+
+        var session = new ControlSession(
+            me.Code, Context.ConnectionId, me.ParticipantId,
+            requesterConnectionId, requester.ParticipantId, requester.DisplayName);
+
+        if (!control.TryStart(session))
+        {
+            await Clients.Client(requesterConnectionId).SendAsync("controlResponse", Context.ConnectionId, false);
+            return;
+        }
+
+        await Clients.Client(requesterConnectionId).SendAsync("controlResponse", Context.ConnectionId, true);
+        await Clients.Caller.SendAsync("controlGranted", requesterConnectionId, requester.DisplayName, requester.ParticipantId);
+        await Clients.OthersInGroup(me.Code).SendAsync("controlStarted", new
+        {
+            targetConnectionId = Context.ConnectionId,
+            controllerConnectionId = requesterConnectionId,
+            controllerName = requester.DisplayName,
+        });
+    }
+
+    /// <summary>The active controller sends one input event to the person being controlled.</summary>
+    public Task SendControlEvent(string ev)
+    {
+        if (string.IsNullOrEmpty(ev) || System.Text.Encoding.UTF8.GetByteCount(ev) > MaxControlEventBytes)
+            return Task.CompletedTask;
+
+        var session = control.GetByController(Context.ConnectionId);
+        if (session is null) return Task.CompletedTask;
+
+        return Clients.Client(session.TargetConnectionId).SendAsync("controlEvent", ev);
+    }
+
+    /// <summary>Either party ends the control session.</summary>
+    public async Task RevokeControl()
+    {
+        var session = control.EndByController(Context.ConnectionId) ?? control.EndByTarget(Context.ConnectionId);
+        if (session is not null) await NotifyControlEnded(session, Context.ConnectionId);
+    }
+
+    private async Task NotifyControlEnded(ControlSession s, string byConnectionId)
+    {
+        await Clients.Clients(s.TargetConnectionId, s.ControllerConnectionId)
+            .SendAsync("controlEnded", byConnectionId);
+        await Clients.Group(s.Code).SendAsync("controlStopped", new
+        {
+            targetConnectionId = s.TargetConnectionId,
+            controllerConnectionId = s.ControllerConnectionId,
         });
     }
 

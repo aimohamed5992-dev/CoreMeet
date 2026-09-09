@@ -91,4 +91,21 @@ export class MeetingHub {
   sendIceCandidate(target: string, candidate: string) {
     return this.connection.invoke("SendIceCandidate", target, candidate).catch(() => undefined);
   }
+
+  // ---- Remote screen control ----
+  requestControl(targetConnectionId: string) {
+    return this.connection.invoke("RequestControl", targetConnectionId).catch(() => undefined);
+  }
+
+  respondControl(requesterConnectionId: string, granted: boolean) {
+    return this.connection.invoke("RespondControl", requesterConnectionId, granted).catch(() => undefined);
+  }
+
+  sendControlEvent(json: string) {
+    return this.connection.invoke("SendControlEvent", json).catch(() => undefined);
+  }
+
+  revokeControl() {
+    return this.connection.invoke("RevokeControl").catch(() => undefined);
+  }
 }

@@ -1,0 +1,411 @@
+{
+  "brand": {
+    "name": "CoreMeet",
+    "tagline": "Secure, instant video meetings in your browser. Built with WebRTC."
+  },
+  "nav": {
+    "features": "Features",
+    "how": "How it works",
+    "security": "Security",
+    "signIn": "Sign in",
+    "getStarted": "Get started",
+    "goToApp": "Go to app"
+  },
+  "footer": {
+    "product": "Product",
+    "getStarted": "Get started",
+    "company": "Company",
+    "rights": "© {{year}} CoreMeet",
+    "links": {
+      "features": "Features",
+      "how": "How it works",
+      "security": "Security",
+      "createAccount": "Create an account",
+      "signIn": "Sign in",
+      "joinMeeting": "Join a meeting",
+      "about": "About",
+      "blog": "Blog",
+      "contact": "Contact"
+    }
+  },
+  "landing": {
+    "hero": {
+      "eyebrow": "WebRTC video, reimagined",
+      "titleStart": "Meetings that start",
+      "titleAccent": "the moment you do.",
+      "lead": "CoreMeet is a clean, fast place to meet. Create a room, share the code, and everyone is talking face to face — no downloads, no friction.",
+      "newMeeting": "New meeting",
+      "codePlaceholder": "Enter a code or link",
+      "codeAria": "Meeting code or link",
+      "join": "Join",
+      "noteFree": "Free forever",
+      "noteNoCard": "No credit card",
+      "noteNoAccount": "Join without an account",
+      "chipLive": "6 people live",
+      "chipPresenting": "Presenting"
+    },
+    "logos": {
+      "heading": "Teams keep their conversations moving with CoreMeet"
+    },
+    "highlights": {
+      "eyebrow": "Built for real conversations",
+      "title": "Everything a call needs. Nothing it doesn't.",
+      "items": [
+        {
+          "tag": "Group video",
+          "title": "Everyone in the room, in crisp HD",
+          "text": "Peer-to-peer WebRTC keeps latency low and your conversation private. The tile grid adapts as people come and go, with an active-speaker view when it gets busy.",
+          "points": [
+            "Up to 8 people in a mesh call",
+            "Adaptive layout",
+            "Mic & camera state you can see at a glance"
+          ]
+        },
+        {
+          "tag": "Present",
+          "title": "Share your screen — it takes the stage",
+          "text": "Start presenting and your screen fills the room while everyone else slides into a neat side rail. Swap between a tab, a window, or the whole display without dropping the call.",
+          "points": [
+            "One-click present",
+            "No renegotiation stutter",
+            "Others stay visible in the rail"
+          ]
+        },
+        {
+          "tag": "Chat & people",
+          "title": "Talk on the side, without leaving",
+          "text": "Send links and notes in the in-call chat, see exactly who's connected, and let the host admit or remove people. Everything is right where you expect it.",
+          "points": [
+            "Live participant roster",
+            "Persistent in-call chat",
+            "Host controls"
+          ]
+        }
+      ]
+    },
+    "featureGrid": {
+      "eyebrow": "Everything you need",
+      "title": "A focused set of tools, done well.",
+      "items": [
+        {
+          "title": "Instant meetings",
+          "text": "Hit New meeting and you're in. Share the code and people join in one click."
+        },
+        {
+          "title": "Join with a code",
+          "text": "Paste a code or a link — no app, no account needed to join a call."
+        },
+        {
+          "title": "Works everywhere",
+          "text": "Desktop and mobile, any modern browser. Nothing to install."
+        },
+        {
+          "title": "Screen sharing",
+          "text": "Present a tab, a window, or your whole screen with a single toggle."
+        },
+        {
+          "title": "In-call chat",
+          "text": "Messages, links and notes for everyone, kept for the whole call."
+        },
+        {
+          "title": "Private by default",
+          "text": "Every room has a unique code and media flows straight between people."
+        }
+      ]
+    },
+    "showcase": {
+      "eyebrow": "See it in motion",
+      "title": "The whole meeting, on one clean screen.",
+      "text": "Video, chat, people and presenting — laid out so you always know where to look."
+    },
+    "how": {
+      "eyebrow": "How it works",
+      "title": "Three steps to your first call.",
+      "steps": [
+        {
+          "title": "Sign in",
+          "text": "Create a free account with your email in a few seconds. You only need one to start a meeting."
+        },
+        {
+          "title": "New meeting",
+          "text": "One tap spins up a room with its own shareable code and link."
+        },
+        {
+          "title": "Share & talk",
+          "text": "Send the link, let people in, and you're face to face — right in the browser."
+        }
+      ]
+    },
+    "stats": {
+      "items": [
+        {
+          "label": "Meetings started",
+          "suffix": "k+"
+        },
+        {
+          "label": "Countries",
+          "suffix": "+"
+        },
+        {
+          "label": "Uptime",
+          "suffix": "%"
+        },
+        {
+          "label": "Median join time",
+          "suffix": "s"
+        }
+      ]
+    },
+    "testimonials": {
+      "eyebrow": "Loved by teams",
+      "title": "People stopped thinking about the tool.",
+      "items": [
+        {
+          "text": "We swapped our old tool for CoreMeet in an afternoon. Standups feel faster and nobody fights with settings anymore.",
+          "name": "Maya Farouk",
+          "role": "Eng. Manager, Northwind"
+        },
+        {
+          "text": "The present mode is exactly right — my slides take over and I can still see the room reacting.",
+          "name": "Daniel Ortiz",
+          "role": "Product Designer"
+        },
+        {
+          "text": "Clients join from a link with no download. That alone saved us the first five minutes of every call.",
+          "name": "Sara Nabil",
+          "role": "Founder, Studio Lumen"
+        }
+      ]
+    },
+    "security": {
+      "eyebrow": "Private by design",
+      "title": "Your meeting is safe.",
+      "text": "No one joins a room unless the host lets them in, and your audio and video travel directly between participants.",
+      "points": [
+        "Peer-to-peer media — the server never sees your call",
+        "Unique room codes, host admits guests",
+        "Rotating refresh tokens, hashed at rest",
+        "Rooms end when the host ends them"
+      ]
+    },
+    "faq": {
+      "eyebrow": "Good to know",
+      "title": "Questions, answered.",
+      "items": [
+        {
+          "q": "Do I need an account to join a meeting?",
+          "a": "No. Anyone with the link can join — you just pick a name and set your camera and mic on the way in. An account is only needed to create a meeting."
+        },
+        {
+          "q": "How many people can be in a call?",
+          "a": "CoreMeet uses a peer-to-peer mesh, which is great for small groups — comfortably up to around 8 people. Larger rooms are on the roadmap."
+        },
+        {
+          "q": "Is it really free?",
+          "a": "Yes. Creating and joining meetings is free, with no time limit and no credit card."
+        },
+        {
+          "q": "Where does my video go?",
+          "a": "Straight between participants over WebRTC. The server only helps set up the connection and relays chat and presence."
+        },
+        {
+          "q": "Which browsers work?",
+          "a": "Any modern browser — Chrome, Edge, Firefox, Safari — on desktop or mobile. Nothing to install."
+        }
+      ]
+    },
+    "cta": {
+      "title": "Start your next meeting in five seconds.",
+      "text": "Free forever. No credit card. Your team can join from a link.",
+      "getStarted": "Get started free",
+      "createAccount": "Create an account"
+    }
+  },
+  "common": {
+    "cancel": "Cancel",
+    "save": "Save",
+    "close": "Close",
+    "remove": "Remove",
+    "change": "Change",
+    "back": "Back",
+    "backToCoreMeet": "Back to CoreMeet",
+    "you": "You",
+    "youParen": " (You)",
+    "host": "Host",
+    "coHost": "Co-host",
+    "guest": "Guest",
+    "offline": "offline",
+    "live": "Live",
+    "connecting": "connecting",
+    "reconnecting": "reconnecting",
+    "disconnected": "disconnected",
+    "justNow": "just now",
+    "minsAgo": "{{count}} min ago",
+    "hoursAgo": "{{count}} h ago"
+  },
+  "auth": {
+    "shellHeading": "Meetings that start the moment you do.",
+    "shellPoints": [
+      "Start a meeting in one click",
+      "Group video over WebRTC",
+      "Private rooms, host-controlled"
+    ],
+    "email": "Email",
+    "password": "Password",
+    "fullName": "Full name",
+    "show": "Show",
+    "hide": "Hide",
+    "login": {
+      "title": "Welcome back",
+      "subtitle": "Sign in to start or join a meeting.",
+      "submit": "Sign in",
+      "submitting": "Signing in…",
+      "footerText": "New to CoreMeet?",
+      "footerLink": "Create an account"
+    },
+    "register": {
+      "title": "Create your account",
+      "subtitle": "Free forever. No credit card required.",
+      "submit": "Create account",
+      "submitting": "Creating account…",
+      "pwHint": "At least 8 characters",
+      "footerText": "Already have an account?",
+      "footerLink": "Sign in"
+    }
+  },
+  "dashboard": {
+    "greetingMorning": "Good morning",
+    "greetingAfternoon": "Good afternoon",
+    "greetingEvening": "Good evening",
+    "greetingLine": "{{greeting}}, {{name}}",
+    "subtitle": "Start a meeting of your own, or hop into one with a code.",
+    "newMeeting": "New meeting",
+    "starting": "Starting…",
+    "or": "or",
+    "joinPlaceholder": "Enter a code or link",
+    "joinAria": "Meeting code or link",
+    "join": "Join",
+    "safe": "Your meetings are private — no one joins a room unless you let them in.",
+    "recent": "Recent meetings",
+    "noMeetingsTitle": "No meetings yet",
+    "noMeetingsText": "Your recent rooms will show up here once you host or join one.",
+    "startFirst": "Start your first meeting",
+    "statusEnded": "ended",
+    "statusActive": "active",
+    "rejoin": "Rejoin",
+    "endedBtn": "Ended"
+  },
+  "lobby": {
+    "notFoundTitle": "Meeting not found",
+    "notFoundText": "Double-check the link or code — this meeting doesn’t exist or has ended.",
+    "gettingReady": "Getting things ready…",
+    "meeting": "Meeting",
+    "firstHere": "You’ll be the first one here.",
+    "onePersonIn": "1 person is already in.",
+    "peopleIn": "{{count}} people are already in.",
+    "cameraUnavailable": "Camera unavailable",
+    "cameraOff": "Camera is off",
+    "addPhoto": "Add photo",
+    "changePhotoShort": "Change",
+    "removePhoto": "Remove photo",
+    "choosePicture": "Choose a picture (optional)",
+    "yourName": "Your name",
+    "namePlaceholder": "e.g. Sara",
+    "joinMeeting": "Join meeting",
+    "joinNow": "Join now",
+    "cancel": "Cancel",
+    "signinHintText": "Have an account?",
+    "signinHintLink": "Sign in",
+    "signinHintTail": "— you only need one to start a meeting."
+  },
+  "room": {
+    "meeting": "Meeting",
+    "copyLink": "Copy meeting link",
+    "linkCopied": "Link copied",
+    "cantJoinTitle": "Can’t join this meeting",
+    "cantJoinText": "The meeting link may be invalid or the meeting has ended.",
+    "soloText": "You’re the only one here.",
+    "copyTheLink": "Copy the link",
+    "soloTail": "to invite people.",
+    "endConfirm": "End the meeting for everyone?",
+    "micTitle": "Turn microphone on/off (m)",
+    "camTitle": "Turn camera on/off (e)",
+    "presentTitle": "Present now",
+    "stopPresentTitle": "Stop presenting",
+    "settingsTitle": "Settings",
+    "peopleTitle": "Show everyone",
+    "chatTitle": "Chat with everyone (c)",
+    "leaveTitle": "Leave call",
+    "presenting": "Presenting",
+    "muted": "Muted"
+  },
+  "chat": {
+    "title": "In-call messages",
+    "empty": "Messages sent here are visible to everyone in the call.",
+    "placeholder": "Send a message to everyone",
+    "send": "Send"
+  },
+  "people": {
+    "title": "People ({{count}})"
+  },
+  "devices": {
+    "camera": "Camera",
+    "microphone": "Microphone",
+    "noCamera": "No camera",
+    "noMicrophone": "No microphone",
+    "cameraN": "Camera {{n}}",
+    "microphoneN": "Microphone {{n}}"
+  },
+  "profile": {
+    "title": "Your profile",
+    "subtitle": "Your name and photo appear on your video tile and in the people list.",
+    "uploadPhoto": "Upload photo",
+    "changePhoto": "Change photo",
+    "name": "Name",
+    "email": "Email",
+    "saved": "Saved ✓",
+    "saveChanges": "Save changes",
+    "saving": "Saving…"
+  },
+  "appMenu": {
+    "profilePhoto": "Profile & photo",
+    "signOut": "Sign out"
+  },
+  "errors": {
+    "signInFailed": "Could not sign you in.",
+    "createFailed": "Could not create your account.",
+    "pwTooShort": "Password must be at least 8 characters.",
+    "saveProfileFailed": "Could not save your profile.",
+    "startMeetingFailed": "Could not start a meeting.",
+    "joinFailed": "Could not join this meeting.",
+    "generic": "Something went wrong.",
+    "invalidCredentials": "Invalid email or password.",
+    "emailExists": "An account with this email already exists.",
+    "meetingNotFound": "Meeting not found.",
+    "meetingUnavailable": "This meeting is not available.",
+    "imageNotImage": "Please choose an image file.",
+    "imageProcess": "Could not process the image.",
+    "imageLoad": "That image could not be loaded.",
+    "cameraBlocked": "Camera and microphone access was blocked. You can still join with chat only.",
+    "noDevices": "No camera or microphone found. You can still join with chat only."
+  },
+  "control": {
+    "request": "Request control",
+    "requesting": "Waiting for approval…",
+    "requestTitle": "Control request",
+    "requestBody": "{{name}} wants to control your shared screen.",
+    "allow": "Allow",
+    "deny": "Deny",
+    "stop": "Stop",
+    "beingControlled": "{{name}} is controlling your screen",
+    "controllingHint": "You’re controlling {{name}}’s screen — press Esc to stop",
+    "controllingAria": "Controlling {{name}}’s screen",
+    "agentMissing": "Install the CoreMeet agent to allow input",
+    "agentMissingLong": "The CoreMeet Control Agent isn’t running on this device. The other person will see your cursor but won’t be able to click or type until you install and start the agent.",
+    "denied": {
+      "denied": "Request declined",
+      "busy": "Someone else is already controlling",
+      "not_sharing": "They stopped sharing their screen"
+    }
+  }
+}

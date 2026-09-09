@@ -61,15 +61,34 @@ api.interceptors.response.use(
 
 export type ApiError = { message: string; errors?: Record<string, string[]> };
 
-/** Pull a human-readable message out of an axios error. */
-export function errorMessage(err: unknown, fallback = "Something went wrong."): string {
+/** Known backend (English) messages → i18n keys, so the UI can localise them. */
+const KNOWN_MESSAGES: Record<string, string> = {
+  "Invalid email or password.": "errors.invalidCredentials",
+  "An account with this email already exists.": "errors.emailExists",
+  "Meeting not found.": "errors.meetingNotFound",
+  "This meeting is not available.": "errors.meetingUnavailable",
+};
+
+/**
+ * Pull a human-readable message out of an axios error.
+ * Pass i18next's `t` to localise known server messages and the fallback key.
+ */
+export function errorMessage(
+  err: unknown,
+  fallback = "Something went wrong.",
+  t?: (key: string) => string,
+): string {
   if (axios.isAxiosError(err)) {
     const data = err.response?.data as ApiError | undefined;
     if (data?.errors) {
       const first = Object.values(data.errors)[0];
       if (first?.length) return first[0];
     }
-    if (data?.message) return data.message;
+    if (data?.message) {
+      const key = KNOWN_MESSAGES[data.message];
+      return key && t ? t(key) : data.message;
+    }
   }
+  if (t && fallback.includes(".")) return t(fallback);
   return fallback;
 }

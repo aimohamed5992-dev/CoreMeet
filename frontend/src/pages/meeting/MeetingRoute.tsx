@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useParams } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { useMeetingMedia } from "../../lib/meetings/useMeetingMedia";
 import { meetingsApi } from "../../lib/meetings/meetingsApi";
 import { getGuestIdentity, saveGuestIdentity } from "../../lib/meetings/guestIdentity";
@@ -15,6 +16,7 @@ import MeetingPage from "./MeetingPage";
  */
 export default function MeetingRoute() {
   const { code = "" } = useParams();
+  const { t } = useTranslation();
   const { user, status } = useAuth();
   const media = useMeetingMedia(true);
 
@@ -73,7 +75,7 @@ export default function MeetingRoute() {
     <MeetingPage
       code={code}
       media={media}
-      guest={isGuest ? { displayName: guestName.trim() || "Guest", avatarUrl: guestAvatar } : undefined}
+      guest={isGuest ? { displayName: guestName.trim() || t("common.guest"), avatarUrl: guestAvatar } : undefined}
     />
   );
 }

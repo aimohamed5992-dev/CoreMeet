@@ -1,17 +1,19 @@
 import { useState } from "react";
 import { Link, Navigate, useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import AuthShell from "./AuthShell";
+import PasswordField from "./PasswordField";
 import { useAuth } from "../../lib/auth/AuthContext";
 import { errorMessage } from "../../lib/api";
 
 export default function RegisterPage() {
+  const { t } = useTranslation();
   const { status, register } = useAuth();
   const navigate = useNavigate();
 
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [showPw, setShowPw] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
@@ -23,7 +25,7 @@ export default function RegisterPage() {
     e.preventDefault();
     setError(null);
     if (password.length < 8) {
-      setError("Password must be at least 8 characters.");
+      setError(t("errors.pwTooShort"));
       return;
     }
     setBusy(true);
@@ -31,7 +33,7 @@ export default function RegisterPage() {
       await register({ name: name.trim(), email: email.trim(), password });
       navigate("/app", { replace: true });
     } catch (err) {
-      setError(errorMessage(err, "Could not create your account."));
+      setError(errorMessage(err, "errors.createFailed", t));
     } finally {
       setBusy(false);
     }
@@ -39,11 +41,11 @@ export default function RegisterPage() {
 
   return (
     <AuthShell
-      title="Create your account"
-      subtitle="Free forever. No credit card required."
+      title={t("auth.register.title")}
+      subtitle={t("auth.register.subtitle")}
       footer={
         <>
-          Already have an account? <Link to="/login">Sign in</Link>
+          {t("auth.register.footerText")} <Link to="/login">{t("auth.register.footerLink")}</Link>
         </>
       }
     >
@@ -51,7 +53,7 @@ export default function RegisterPage() {
         {error && <div className="auth__error" role="alert">{error}</div>}
 
         <div className="field">
-          <label htmlFor="name">Full name</label>
+          <label htmlFor="name">{t("auth.fullName")}</label>
           <input
             id="name"
             className="input"
@@ -64,7 +66,7 @@ export default function RegisterPage() {
         </div>
 
         <div className="field">
-          <label htmlFor="email">Email</label>
+          <label htmlFor="email">{t("auth.email")}</label>
           <input
             id="email"
             className="input"
@@ -76,42 +78,17 @@ export default function RegisterPage() {
           />
         </div>
 
-        <div className="field">
-          <label htmlFor="password">Password</label>
-          <div style={{ position: "relative" }}>
-            <input
-              id="password"
-              className="input"
-              style={{ width: "100%", paddingRight: 64 }}
-              type={showPw ? "text" : "password"}
-              autoComplete="new-password"
-              required
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-            />
-            <button
-              type="button"
-              onClick={() => setShowPw((v) => !v)}
-              style={{
-                position: "absolute",
-                right: 10,
-                top: "50%",
-                transform: "translateY(-50%)",
-                fontSize: "0.82rem",
-                fontWeight: 600,
-                color: "var(--text-muted)",
-              }}
-            >
-              {showPw ? "Hide" : "Show"}
-            </button>
-          </div>
-          <span className="auth__hint" style={pwTooShort ? { color: "var(--danger)" } : undefined}>
-            At least 8 characters
-          </span>
-        </div>
+        <PasswordField
+          value={password}
+          onChange={setPassword}
+          label={t("auth.password")}
+          autoComplete="new-password"
+          hint={t("auth.register.pwHint")}
+          hintError={pwTooShort}
+        />
 
         <button className="btn btn--primary auth__submit" disabled={busy}>
-          {busy ? "Creating account…" : "Create account"}
+          {busy ? t("auth.register.submitting") : t("auth.register.submit")}
         </button>
       </form>
     </AuthShell>

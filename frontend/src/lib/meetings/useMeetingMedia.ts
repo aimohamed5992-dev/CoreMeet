@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 
 export type DeviceList = { cameras: MediaDeviceInfo[]; mics: MediaDeviceInfo[] };
 
@@ -29,6 +30,7 @@ export type MediaControls = {
  * callbacks to `replaceTrack` on every connection.
  */
 export function useMeetingMedia(enabled: boolean): MediaControls {
+  const { t } = useTranslation();
   const [stream, setStream] = useState<MediaStream | null>(null);
   const [ready, setReady] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -93,8 +95,8 @@ export function useMeetingMedia(enabled: boolean): MediaControls {
         if (cancelled) return;
         setError(
           (e as DOMException)?.name === "NotAllowedError"
-            ? "Camera and microphone access was blocked. You can still join with chat only."
-            : "No camera or microphone found. You can still join with chat only.",
+            ? t("errors.cameraBlocked")
+            : t("errors.noDevices"),
         );
         setReady(true);
       }

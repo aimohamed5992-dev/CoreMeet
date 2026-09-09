@@ -8,7 +8,11 @@ public record ConnectionInfo(
     Guid ParticipantId,
     string DisplayName,
     string AvatarColor = "#667a6f",
-    string? AvatarUrl = null);
+    string? AvatarUrl = null)
+{
+    /// <summary>Whether this connection is currently sharing its screen (from the last <c>SetMediaState</c>).</summary>
+    public bool SharingScreen { get; set; }
+}
 
 /// <summary>
 /// In-memory map of live SignalR connections to meeting participants. Single-instance

@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import Avatar from "../../components/Avatar";
 import { MicOffIcon } from "../../components/meet-icons";
 
@@ -30,6 +31,7 @@ export default function VideoTile({
   screen,
   contain,
 }: Props) {
+  const { t } = useTranslation();
   const videoRef = useRef<HTMLVideoElement>(null);
   const [trackLive, setTrackLive] = useState(false);
   const hasVideo = trackLive && !videoOff;
@@ -79,15 +81,15 @@ export default function VideoTile({
       )}
       <div className="vtile__bar">
         {audioOff && (
-          <span className="vtile__mute" title="Muted">
+          <span className="vtile__mute" title={t("room.muted")}>
             <MicOffIcon width={14} height={14} />
           </span>
         )}
         <span className="vtile__name">
           {name}
-          {isSelf ? " (You)" : ""}
+          {isSelf ? t("common.youParen") : ""}
         </span>
-        {screen && <span className="vtile__tag">Presenting</span>}
+        {screen && <span className="vtile__tag">{t("room.presenting")}</span>}
       </div>
     </div>
   );

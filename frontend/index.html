@@ -8,12 +8,17 @@
     <meta name="description" content="CoreMeet — secure, instant video meetings in your browser, built with WebRTC." />
     <title>CoreMeet — instant video meetings</title>
     <script>
-      // Apply the saved theme before first paint (light is the default).
+      // Apply the saved theme + language/direction before first paint.
       try {
         var t = localStorage.getItem("coremeet.theme");
         document.documentElement.setAttribute("data-theme", t === "dark" ? "dark" : "light");
+        var l = localStorage.getItem("coremeet.lang");
+        l = l === "ar" || l === "en" ? l : "en";
+        document.documentElement.setAttribute("lang", l);
+        document.documentElement.setAttribute("dir", l === "ar" ? "rtl" : "ltr");
       } catch (e) {
         document.documentElement.setAttribute("data-theme", "light");
+        document.documentElement.setAttribute("dir", "ltr");
       }
     </script>
   </head>

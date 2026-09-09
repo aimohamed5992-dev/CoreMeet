@@ -7,7 +7,18 @@ appsettings.*.local.json
 # ---- Node / Vite ----
 node_modules/
 frontend/dist/
+frontend/coremeet-frontend-dist/
+frontend/coremeet-frontend-dist.zip
 *.local
+
+# ---- Flutter (mobile/ also has its own .gitignore) ----
+mobile/build/
+mobile/.dart_tool/
+mobile/ios/Pods/
+
+# ---- Electron agent (agent/ also has its own .gitignore) ----
+agent/dist/
+agent/out/
 
 # ---- Env ----
 .env

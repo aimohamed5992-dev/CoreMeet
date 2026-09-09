@@ -32,7 +32,7 @@
 
 .app-shell__menu {
   position: absolute;
-  right: 0;
+  inset-inline-end: 0;
   top: calc(100% + 10px);
   width: 260px;
   padding: 8px;
@@ -51,7 +51,7 @@
 .app-shell__menu-item {
   display: block;
   width: 100%;
-  text-align: left;
+  text-align: start;
   padding: 10px;
   border-radius: var(--r-sm);
   font-weight: 500;

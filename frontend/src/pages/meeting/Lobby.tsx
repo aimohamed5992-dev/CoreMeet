@@ -1,8 +1,10 @@
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import Logo from "../../components/Logo";
 import Avatar from "../../components/Avatar";
 import ThemeToggle from "../../components/ThemeToggle";
+import LanguageToggle from "../../components/LanguageToggle";
 import DeviceMenu from "./DeviceMenu";
 import { MicIcon, MicOffIcon, CamIcon, CamOffIcon } from "../../components/meet-icons";
 import type { MediaControls } from "../../lib/meetings/useMeetingMedia";
@@ -37,6 +39,7 @@ export default function Lobby({
   onAvatarChange,
   onJoin,
 }: Props) {
+  const { t } = useTranslation();
   const videoRef = useRef<HTMLVideoElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
   const [avatarError, setAvatarError] = useState<string | null>(null);
@@ -58,17 +61,24 @@ export default function Lobby({
     try {
       onAvatarChange(await fileToAvatarDataUrl(file));
     } catch (e) {
-      setAvatarError((e as Error).message);
+      setAvatarError(t((e as Error).message));
     }
   };
+
+  const peopleLine =
+    connected.length === 0
+      ? t("lobby.firstHere")
+      : connected.length === 1
+        ? t("lobby.onePersonIn")
+        : t("lobby.peopleIn", { count: connected.length });
 
   if (notFound) {
     return (
       <div className="lobby lobby--message">
         <Logo size={32} />
-        <h1>Meeting not found</h1>
-        <p>Double-check the link or code — this meeting doesn’t exist or has ended.</p>
-        <Link to="/" className="btn btn--primary">Back to CoreMeet</Link>
+        <h1>{t("lobby.notFoundTitle")}</h1>
+        <p>{t("lobby.notFoundText")}</p>
+        <Link to="/" className="btn btn--primary">{t("common.backToCoreMeet")}</Link>
       </div>
     );
   }
@@ -89,11 +99,8 @@ export default function Lobby({
         />
         {(!media.stream || !media.videoOn) && (
           <div className="lobby__video-off">
-            <Avatar
-              user={{ name: displayName || "You", avatarColor, avatarUrl }}
-              size={96}
-            />
-            <span>{media.error ? "Camera unavailable" : "Camera is off"}</span>
+            <Avatar user={{ name: displayName || t("common.you"), avatarColor, avatarUrl }} size={96} />
+            <span>{media.error ? t("lobby.cameraUnavailable") : t("lobby.cameraOff")}</span>
           </div>
         )}
 
@@ -102,6 +109,7 @@ export default function Lobby({
             className={`lobby__pill ${media.audioOn ? "" : "lobby__pill--off"}`}
             onClick={media.toggleAudio}
             disabled={!media.stream}
+            aria-label={t("room.micTitle")}
           >
             {media.audioOn ? <MicIcon width={18} height={18} /> : <MicOffIcon width={18} height={18} />}
           </button>
@@ -109,6 +117,7 @@ export default function Lobby({
             className={`lobby__pill ${media.videoOn ? "" : "lobby__pill--off"}`}
             onClick={media.toggleVideo}
             disabled={!media.stream}
+            aria-label={t("room.camTitle")}
           >
             {media.videoOn ? <CamIcon width={18} height={18} /> : <CamOffIcon width={18} height={18} />}
           </button>
@@ -118,15 +127,14 @@ export default function Lobby({
       <div className="lobby__panel">
         <div className="lobby__panel-top">
           <Link to="/" className="lobby__logo"><Logo size={28} /></Link>
-          <ThemeToggle />
+          <div className="lobby__panel-toggles">
+            <LanguageToggle />
+            <ThemeToggle />
+          </div>
         </div>
 
-        <h1>{loadingMeeting ? "Getting things ready…" : meeting?.title ?? "Meeting"}</h1>
-        <p className="lobby__sub">
-          {connected.length === 0
-            ? "You’ll be the first one here."
-            : `${connected.length} ${connected.length === 1 ? "person is" : "people are"} already in.`}
-        </p>
+        <h1>{loadingMeeting ? t("lobby.gettingReady") : (meeting?.title ?? t("lobby.meeting"))}</h1>
+        <p className="lobby__sub">{peopleLine}</p>
 
         {connected.length > 0 && (
           <div className="lobby__faces">
@@ -145,10 +153,10 @@ export default function Lobby({
               type="button"
               className="lobby__avatar-pick"
               onClick={() => fileRef.current?.click()}
-              title="Choose a picture (optional)"
+              title={t("lobby.choosePicture")}
             >
               <Avatar user={{ name: displayName || "?", avatarColor, avatarUrl }} size={56} />
-              <span>{avatarUrl ? "Change" : "Add photo"}</span>
+              <span>{avatarUrl ? t("lobby.changePhotoShort") : t("lobby.addPhoto")}</span>
             </button>
             <input
               ref={fileRef}
@@ -158,10 +166,10 @@ export default function Lobby({
               onChange={(e) => pickAvatar(e.target.files?.[0])}
             />
             <label className="field lobby__name">
-              <span>Your name</span>
+              <span>{t("lobby.yourName")}</span>
               <input
                 className="input"
-                placeholder="e.g. Sara"
+                placeholder={t("lobby.namePlaceholder")}
                 value={displayName}
                 maxLength={60}
                 onChange={(e) => onNameChange(e.target.value)}
@@ -170,7 +178,7 @@ export default function Lobby({
             </label>
             {avatarUrl && (
               <button type="button" className="lobby__avatar-clear" onClick={() => onAvatarChange(null)}>
-                Remove photo
+                {t("lobby.removePhoto")}
               </button>
             )}
           </div>
@@ -182,13 +190,13 @@ export default function Lobby({
         <DeviceMenu media={media} />
 
         <button className="btn btn--primary btn--lg lobby__join" onClick={onJoin} disabled={!canJoin}>
-          {isGuest ? "Join meeting" : "Join now"}
+          {isGuest ? t("lobby.joinMeeting") : t("lobby.joinNow")}
         </button>
-        <Link to="/" className="lobby__cancel">Cancel</Link>
+        <Link to="/" className="lobby__cancel">{t("lobby.cancel")}</Link>
 
         {isGuest && (
           <p className="lobby__signin-hint">
-            Have an account? <Link to="/login">Sign in</Link> — you only need one to start a meeting.
+            {t("lobby.signinHintText")} <Link to="/login">{t("lobby.signinHintLink")}</Link> {t("lobby.signinHintTail")}
           </p>
         )}
       </div>
