@@ -293,7 +293,10 @@
     "statusEnded": "منتهٍ",
     "statusActive": "نشط",
     "rejoin": "إعادة الانضمام",
-    "endedBtn": "منتهٍ"
+    "endedBtn": "منتهٍ",
+    "rename": "إعادة تسمية",
+    "renameTitle": "إعادة تسمية الاجتماع",
+    "renameSave": "حفظ"
   },
   "lobby": {
     "notFoundTitle": "الاجتماع غير موجود",
@@ -337,7 +340,8 @@
     "chatTitle": "محادثة الجميع (c)",
     "leaveTitle": "مغادرة الاتصال",
     "presenting": "جارٍ العرض",
-    "muted": "مكتوم"
+    "muted": "مكتوم",
+    "renameTitle": "إعادة تسمية الاجتماع"
   },
   "chat": {
     "title": "رسائل الاجتماع",

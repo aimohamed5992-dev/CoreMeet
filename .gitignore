@@ -1,6 +1,9 @@
 # ---- .NET ----
 bin/
 obj/
+publish/
+backend/publish*/
+backend/*.tar.gz
 *.user
 appsettings.*.local.json
 

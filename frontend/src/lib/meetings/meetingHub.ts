@@ -76,6 +76,10 @@ export class MeetingHub {
     return this.connection.invoke("SendChatMessage", content);
   }
 
+  renameMeeting(title: string) {
+    return this.connection.invoke("RenameMeeting", title).catch(() => undefined);
+  }
+
   setMediaState(audio: boolean, video: boolean, screen: boolean) {
     return this.connection.invoke("SetMediaState", audio, video, screen).catch(() => undefined);
   }

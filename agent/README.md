@@ -49,10 +49,23 @@ to run the tests, `npm install ws` is enough.
 ## Package installers
 
 ```bash
-npm run dist:mac     # .dmg + .zip
-npm run dist:win     # NSIS installer
-npm run dist:linux   # AppImage
+npm run dist:mac -- --universal   # dist/CoreMeet Control Agent-<v>-universal.dmg  (Intel + Apple Silicon)
+npm run dist:win -- --x64         # dist/CoreMeet Control Agent Setup <v>.exe      (NSIS, x64)
+npm run dist:linux                # dist/CoreMeet Control Agent-<v>.AppImage
 ```
+
+electron-builder cross-builds Windows from macOS (it downloads its own Wine +
+NSIS). Each installer bundles the darwin / win32 / linux `libnut` binaries and
+picks the right one at runtime.
+
+**These builds are unsigned** (no Apple Developer / code-signing certs):
+
+- **macOS** — Gatekeeper blocks the first launch. Right-click the app → *Open* →
+  *Open*, or System Settings → Privacy & Security → *Open Anyway*.
+- **Windows** — SmartScreen warns. *More info* → *Run anyway*.
+
+Set `CSC_LINK` / `CSC_KEY_PASSWORD` (and `APPLE_ID` / `APPLE_APP_SPECIFIC_PASSWORD`
+for notarization) to produce signed installers.
 
 ## Configuration (env vars)
 

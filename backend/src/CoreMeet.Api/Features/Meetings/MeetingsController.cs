@@ -51,6 +51,15 @@ public class MeetingsController(MeetingService meetings, ICurrentUser currentUse
     }
 
     [Authorize]
+    [HttpPut("{code}")]
+    public async Task<IActionResult> Rename(string code, RenameMeetingRequest req, CancellationToken ct)
+    {
+        if (currentUser.UserId is not { } userId) return Unauthorized();
+        var title = await meetings.RenameAsync(code, userId, req.Title, ct);
+        return title is null ? Forbid() : Ok(new { title });
+    }
+
+    [Authorize]
     [HttpPost("{code}/end")]
     public async Task<IActionResult> End(string code, CancellationToken ct)
     {

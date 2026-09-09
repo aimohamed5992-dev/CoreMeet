@@ -7,6 +7,7 @@ import type { MeetingSummary } from "../lib/meetings/types";
 import { errorMessage } from "../lib/api";
 import { timeAgo } from "../lib/datetime";
 import Avatar from "../components/Avatar";
+import EditableMeetingTitle from "./meeting/EditableMeetingTitle";
 import EmptyMeetings from "../components/EmptyMeetings";
 import { ArrowRightIcon, KeyboardIcon, ShieldIcon, VideoPlusIcon } from "../components/icons";
 import "./DashboardPage.css";
@@ -24,6 +25,17 @@ export default function DashboardPage() {
   useEffect(() => {
     meetingsApi.listMine().then(setRecent).catch(() => setRecent([]));
   }, []);
+
+  const rename = async (code: string, title: string) => {
+    setRecent((prev) =>
+      prev?.map((m) => (m.code === code ? { ...m, title } : m)) ?? prev,
+    );
+    try {
+      await meetingsApi.rename(code, title);
+    } catch {
+      meetingsApi.listMine().then(setRecent).catch(() => undefined); // resync on failure
+    }
+  };
 
   const newMeeting = async () => {
     setError(null);
@@ -108,7 +120,14 @@ export default function DashboardPage() {
                   <VideoPlusIcon />
                 </div>
                 <div className="dash__meeting-body">
-                  <strong>{m.title}</strong>
+                  <EditableMeetingTitle
+                    title={m.title}
+                    canEdit={m.status !== 2 && !!user && m.hostId === user.id}
+                    onRename={(title) => rename(m.code, title)}
+                    tooltipKey="dashboard.renameTitle"
+                    className="dash__meeting-rename"
+                    inputClassName="dash__meeting-rename-input"
+                  />
                   <span className="dash__meeting-meta">
                     {m.code} · {m.status === 2 ? t("dashboard.statusEnded") : t("dashboard.statusActive")} · {timeAgo(m.createdAt)}
                   </span>

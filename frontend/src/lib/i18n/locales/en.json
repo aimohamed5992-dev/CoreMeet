@@ -293,7 +293,10 @@
     "statusEnded": "ended",
     "statusActive": "active",
     "rejoin": "Rejoin",
-    "endedBtn": "Ended"
+    "endedBtn": "Ended",
+    "rename": "Rename",
+    "renameTitle": "Rename meeting",
+    "renameSave": "Save"
   },
   "lobby": {
     "notFoundTitle": "Meeting not found",
@@ -337,7 +340,8 @@
     "chatTitle": "Chat with everyone (c)",
     "leaveTitle": "Leave call",
     "presenting": "Presenting",
-    "muted": "Muted"
+    "muted": "Muted",
+    "renameTitle": "Rename meeting"
   },
   "chat": {
     "title": "In-call messages",

@@ -10,6 +10,7 @@ import Logo from "../../components/Logo";
 import ThemeToggle from "../../components/ThemeToggle";
 import LanguageToggle from "../../components/LanguageToggle";
 import VideoTile from "./VideoTile";
+import EditableMeetingTitle from "./EditableMeetingTitle";
 import ParticipantsPanel from "./ParticipantsPanel";
 import ChatPanel from "./ChatPanel";
 import DeviceMenu from "./DeviceMenu";
@@ -186,7 +187,11 @@ export default function MeetingPage({
       <header className="room__top">
         <Logo size={22} />
         <div className="room__meta">
-          <strong>{room.meeting?.title ?? t("room.meeting")}</strong>
+          <EditableMeetingTitle
+            title={room.meeting?.title ?? t("room.meeting")}
+            canEdit={isHost}
+            onRename={room.renameMeeting}
+          />
           <button className="room__code" onClick={copyLink} title={t("room.copyLink")}>
             <LinkIcon width={14} height={14} /> {copied ? t("room.linkCopied") : code}
           </button>

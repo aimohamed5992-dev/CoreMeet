@@ -81,6 +81,27 @@
 }
 .dash__meeting-body { flex: 1; min-width: 0; }
 .dash__meeting-body strong { display: block; }
+.dash__meeting-rename {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 100%;
+  color: var(--text);
+}
+.dash__meeting-rename strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dash__meeting-rename svg { flex: none; opacity: 0; color: var(--text-muted); transition: opacity .15s; }
+.dash__meeting-rename:hover svg { opacity: 1; }
+.dash__meeting-rename-input {
+  font: inherit;
+  font-weight: 700;
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--primary);
+  border-radius: 6px;
+  padding: 2px 8px;
+  max-width: min(70vw, 320px);
+  outline: none;
+}
 .dash__meeting-meta { font-size: 0.82rem; color: var(--text-muted); }
 .dash__meeting-people { display: flex; align-items: center; gap: 14px; flex: none; }
 .dash__count { display: inline-flex; align-items: center; gap: 6px; font-size: 0.85rem; color: var(--text-muted); }

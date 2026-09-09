@@ -52,9 +52,10 @@ export default function Logo({ size = 30, withWordmark = true, tone = "brand", s
           style={{
             fontFamily: "var(--font-display)",
             fontWeight: 800,
-            fontSize: size * 0.62,
-            letterSpacing: "-0.03em",
+            fontSize: size * 0.82,
+            letterSpacing: "-0.02em",
             color: wordColor,
+            lineHeight: 1,
           }}
         >
           Core<span style={{ color: accentColor }}>Meet</span>

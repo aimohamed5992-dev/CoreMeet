@@ -42,6 +42,7 @@ export type MeetingRoom = {
   replaceOutgoingVideo: (track: MediaStreamTrack | null) => void;
   replaceOutgoingAudio: (track: MediaStreamTrack | null) => void;
   broadcastMediaState: (audio: boolean, video: boolean, screen: boolean) => void;
+  renameMeeting: (title: string) => void;
   control: ControlState;
 };
 
@@ -157,6 +158,9 @@ export function useMeetingRoom(code: string, { localStream, mediaSettled, guest 
         hub.on("chatMessage", (msg: ChatMessage) =>
           setMessages((prev) => (prev.some((m) => m.id === msg.id) ? prev : [...prev, msg])),
         );
+        hub.on("meetingRenamed", (payload: { title: string }) =>
+          setMeeting((prev) => (prev ? { ...prev, title: payload.title } : prev)),
+        );
         hub.on("error", (message: string) => setError(message));
 
         // ---- remote control ----
@@ -267,6 +271,13 @@ export function useMeetingRoom(code: string, { localStream, mediaSettled, guest 
     hubRef.current?.setMediaState(audio, video, screen);
   }, []);
 
+  const renameMeeting = useCallback((title: string) => {
+    const trimmed = title.trim();
+    if (!trimmed) return;
+    setMeeting((prev) => (prev ? { ...prev, title: trimmed } : prev)); // optimistic
+    hubRef.current?.renameMeeting(trimmed);
+  }, []);
+
   // ---- control actions ----
   const ctlRequest = useCallback((targetConnectionId: string) => {
     setCtlRequestState("requesting");
@@ -323,6 +334,7 @@ export function useMeetingRoom(code: string, { localStream, mediaSettled, guest 
     connState,
     error,
     sendMessage,
+    renameMeeting,
     replaceOutgoingVideo,
     replaceOutgoingAudio,
     broadcastMediaState,

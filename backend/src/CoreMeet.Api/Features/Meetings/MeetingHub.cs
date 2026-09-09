@@ -1,4 +1,5 @@
 using CoreMeet.Api.Domain.Entities;
+using CoreMeet.Api.Domain.Enums;
 using CoreMeet.Api.Infrastructure.Persistence;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
@@ -138,6 +139,29 @@ public class MeetingHub(AppDbContext db, MeetingConnectionRegistry registry, Con
 
         await Clients.Group(info.Code).SendAsync("chatMessage", new ChatMessageDto(
             message.Id, message.SenderParticipantId, message.SenderName, message.Content, message.SentAt));
+    }
+
+    /// <summary>Host renames the meeting; every participant sees it live.</summary>
+    public async Task RenameMeeting(string title)
+    {
+        var info = registry.Get(Context.ConnectionId);
+        if (info is null || string.IsNullOrWhiteSpace(title)) return;
+
+        var trimmed = title.Trim();
+        if (trimmed.Length > 200) trimmed = trimmed[..200];
+
+        var participant = await db.MeetingParticipants
+            .Include(p => p.Meeting)
+            .FirstOrDefaultAsync(p => p.Id == info.ParticipantId);
+        var meeting = participant?.Meeting;
+        if (meeting is null || meeting.HostId != participant!.UserId ||
+            meeting.Status == MeetingStatus.Ended)
+            return;
+
+        meeting.Title = trimmed;
+        await db.SaveChangesAsync();
+
+        await Clients.Group(info.Code).SendAsync("meetingRenamed", new { title = trimmed });
     }
 
     // ---- Media state (mic / camera on-off, shown on remote tiles) ----
