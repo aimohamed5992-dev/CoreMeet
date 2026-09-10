@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-/// CoreMeet palette, mirrored from the web design tokens.
+/// Cloud Meet palette, mirrored from the web design tokens.
 class BrandColors {
   const BrandColors._();
 

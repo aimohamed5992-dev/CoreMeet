@@ -121,7 +121,7 @@ export default function MeetingPage({
         <Logo size={32} />
         <h1>{t("room.cantJoinTitle")}</h1>
         <p>{room.error ?? t("room.cantJoinText")}</p>
-        <button className="btn btn--primary" onClick={leave}>{t("common.backToCoreMeet")}</button>
+        <button className="btn btn--primary" onClick={leave}>{t("common.backToHome")}</button>
       </div>
     );
   }
@@ -160,7 +160,7 @@ export default function MeetingPage({
   const others = presenter ? allTiles.filter((t) => t !== presenter) : allTiles;
   const connectedCount = room.participants.filter((p) => p.isConnected).length;
 
-  // Only the CoreMeet desktop app can be a remote-control target.
+  // Only the Cloud Meet desktop app can be a remote-control target.
   const canRequestControl =
     !!presenter &&
     !presenter.isSelf &&

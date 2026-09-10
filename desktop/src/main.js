@@ -12,7 +12,7 @@ const { installUpdater } = require("./updater");
 let control = null;
 let updater = null;
 
-app.setName("CoreMeet");
+app.setName("Cloud Meet");
 
 const LOG = process.env.CM_LOG;
 const log = (...a) => {

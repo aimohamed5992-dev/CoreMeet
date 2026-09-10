@@ -78,7 +78,7 @@ export default function Lobby({
         <Logo size={32} />
         <h1>{t("lobby.notFoundTitle")}</h1>
         <p>{t("lobby.notFoundText")}</p>
-        <Link to="/" className="btn btn--primary">{t("common.backToCoreMeet")}</Link>
+        <Link to="/" className="btn btn--primary">{t("common.backToHome")}</Link>
       </div>
     );
   }

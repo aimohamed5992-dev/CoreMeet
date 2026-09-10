@@ -5,7 +5,7 @@ const { codeToKey, hasCode } = require("./keymap");
 const BUTTONS = ["LEFT", "MIDDLE", "RIGHT"]; // event.button 0/1/2
 
 /**
- * Turns normalised CoreMeet control events into real OS input via nut.js.
+ * Turns normalised Cloud Meet control events into real OS input via nut.js.
  *
  * Coordinates arrive as 0..1 of the shared frame; we map them onto nut.js's
  * own screen space (the same space `mouse.setPosition` expects), which keeps

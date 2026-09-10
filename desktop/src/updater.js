@@ -27,7 +27,7 @@ function installUpdater(log) {
       type: "info",
       buttons: ["Restart now", "Later"],
       defaultId: 0,
-      message: `CoreMeet ${i.version} is ready`,
+      message: `Cloud Meet ${i.version} is ready`,
       detail: "Restart to finish updating.",
     });
     if (response === 0) autoUpdater.quitAndInstall();

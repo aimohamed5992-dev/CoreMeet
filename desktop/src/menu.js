@@ -94,7 +94,7 @@ function buildMenu(win, control, updater) {
               { type: "separator" },
             ]),
         {
-          label: "CoreMeet on the web",
+          label: "Cloud Meet on the web",
           click: () => shell.openExternal("https://coremeet.urapp4u.com"),
         },
       ],

@@ -2,7 +2,7 @@ import axios, { AxiosError, type InternalAxiosRequestConfig } from "axios";
 import { config } from "./config";
 import { getSession, setSession } from "./auth/tokenStore";
 
-/** Shared axios instance for the CoreMeet API. */
+/** Shared axios instance for the Cloud Meet API. */
 export const api = axios.create({
   baseURL: config.apiBaseUrl,
   headers: { "Content-Type": "application/json" },

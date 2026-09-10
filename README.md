@@ -1,6 +1,6 @@
 <div align="center">
 
-# CoreMeet
+# Cloud Meet
 
 **A Google Meet–style video meeting platform.**
 Sign in, start a meeting, share the code — everyone is talking face to face in the browser over WebRTC.
@@ -14,7 +14,7 @@ Sign in, start a meeting, share the code — everyone is talking face to face in
 
 </div>
 
-![CoreMeet landing page](docs/screenshots/landing-hero.jpg)
+![Cloud Meet landing page](docs/screenshots/landing-hero.jpg)
 
 ---
 
@@ -140,7 +140,7 @@ call — reusing a rotated token revokes the whole chain.
 ## Desktop app & remote control
 
 The [`desktop/`](desktop/README.md) app (Electron, Windows + macOS) is the full
-CoreMeet UI plus two things a browser can't do:
+Cloud Meet UI plus two things a browser can't do:
 
 - **Native screen share** — `desktopCapturer` with a source picker (the OS-native
   picker on macOS 14.4+ / Windows).
@@ -177,7 +177,7 @@ icons and the Cairo Arabic web font. English is the default, Arabic is opt-in.
 Flutter app in [`mobile/`](mobile/) for Android + iOS, hitting the same backend:
 auth, dashboard, create / join by code, lobby, WebRTC-mesh meeting room, chat,
 participants, host controls, EN/AR + RTL, and the **controller side** of remote
-control (drive a desktop user's shared screen (they must be on the CoreMeet desktop app)). See
+control (drive a desktop user's shared screen (they must be on the Cloud Meet desktop app)). See
 [`mobile/README.md`](mobile/README.md).
 
 ```bash

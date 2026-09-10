@@ -19,7 +19,7 @@ function desktopControl(): DesktopControl | null {
 
 /**
  * Delivers relayed control events to the OS while this machine is being
- * controlled. Only the **CoreMeet desktop app** can inject input — in a plain
+ * controlled. Only the **Cloud Meet desktop app** can inject input — in a plain
  * browser there is nothing to inject into, so the status stays `absent`.
  *
  * `active` — true only while a control session is live.

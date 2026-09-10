@@ -25,7 +25,7 @@ export type ControlState = {
   stop: () => void;
   /** Room-wide sessions, keyed by target connection id. */
   sessions: Record<string, { controllerConnectionId: string; controllerName: string }>;
-  /** Connection ids running the CoreMeet desktop app — only these can be controlled. */
+  /** Connection ids running the Cloud Meet desktop app — only these can be controlled. */
   desktopPeers: Set<string>;
   /** Target subscribes here to receive incoming control events. */
   onEvent: (cb: ((json: string) => void) | null) => void;

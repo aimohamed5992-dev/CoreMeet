@@ -29,7 +29,7 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [sharedPreferencesProvider.overrideWithValue(prefs)],
-        child: const CoreMeetApp(),
+        child: const CloudMeetApp(),
       ),
     );
     await tester.pumpAndSettle(const Duration(seconds: 2));

@@ -7,8 +7,8 @@ import 'localization/locale_controller.dart';
 import 'router/app_router.dart';
 import 'theme/app_theme.dart';
 
-class CoreMeetApp extends ConsumerWidget {
-  const CoreMeetApp({super.key});
+class CloudMeetApp extends ConsumerWidget {
+  const CloudMeetApp({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {

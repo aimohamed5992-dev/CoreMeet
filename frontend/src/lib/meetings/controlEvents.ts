@@ -1,6 +1,6 @@
 /**
  * The control-event contract, shared by the controller (who produces events over
- * the shared video) and the target (who forwards them to the CoreMeet Control
+ * the shared video) and the target (who forwards them to the Cloud Meet Control
  * Agent for OS injection). Coordinates are normalised 0..1 of the shared frame.
  */
 export type ControlEvent =

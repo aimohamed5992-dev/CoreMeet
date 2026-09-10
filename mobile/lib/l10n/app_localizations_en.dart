@@ -9,7 +9,7 @@ class LEn extends L {
   LEn([String locale = 'en']) : super(locale);
 
   @override
-  String get appName => 'CoreMeet';
+  String get appName => 'Cloud Meet';
 
   @override
   String get langName => 'English';
@@ -72,7 +72,7 @@ class LEn extends L {
   String get loginCta => 'Sign in';
 
   @override
-  String get loginNoAccount => 'New to CoreMeet?';
+  String get loginNoAccount => 'New to Cloud Meet?';
 
   @override
   String get loginCreateAccount => 'Create an account';
@@ -117,7 +117,7 @@ class LEn extends L {
   String get errorEmailExists => 'An account with this email already exists.';
 
   @override
-  String get errorNetwork => 'Can’t reach CoreMeet. Check your connection.';
+  String get errorNetwork => 'Can’t reach Cloud Meet. Check your connection.';
 
   @override
   String get errorGeneric => 'Something went wrong. Please try again.';
@@ -410,5 +410,5 @@ class LEn extends L {
   String get ctlDeniedDenied => 'Request declined';
 
   @override
-  String get ctlAndroidTargetNote => 'Being controlled from another device needs the CoreMeet accessibility service (Android). iOS can’t be controlled.';
+  String get ctlAndroidTargetNote => 'Being controlled from another device needs the Cloud Meet accessibility service (Android). iOS can’t be controlled.';
 }

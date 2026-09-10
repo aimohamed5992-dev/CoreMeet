@@ -1,6 +1,6 @@
 {
   "@@locale": "ar",
-  "appName": "CoreMeet",
+  "appName": "كلاود ميت",
 
   "langName": "العربية",
   "switchToArabic": "العربية",
@@ -26,7 +26,7 @@
   "loginTitle": "مرحبًا بعودتك",
   "loginSubtitle": "سجّل الدخول لبدء اجتماع أو الانضمام إليه.",
   "loginCta": "تسجيل الدخول",
-  "loginNoAccount": "جديد على CoreMeet؟",
+  "loginNoAccount": "جديد على كلاود ميت؟",
   "loginCreateAccount": "أنشئ حسابًا",
 
   "registerTitle": "أنشئ حسابك",
@@ -45,7 +45,7 @@
 
   "errorInvalidCredentials": "البريد الإلكتروني أو كلمة المرور غير صحيحة.",
   "errorEmailExists": "يوجد حساب بهذا البريد الإلكتروني بالفعل.",
-  "errorNetwork": "تعذّر الوصول إلى CoreMeet. تحقّق من اتصالك.",
+  "errorNetwork": "تعذّر الوصول إلى كلاود ميت. تحقّق من اتصالك.",
   "errorGeneric": "حدث خطأ ما. من فضلك حاول مجددًا.",
   "errorSignInFailed": "تعذّر تسجيل دخولك.",
   "errorCreateFailed": "تعذّر إنشاء حسابك.",
@@ -144,5 +144,5 @@
   "ctlDeniedBusy": "هناك شخص آخر يتحكّم بالفعل",
   "ctlDeniedNotSharing": "توقّف عن مشاركة شاشته",
   "ctlDeniedDenied": "تم رفض الطلب",
-  "ctlAndroidTargetNote": "التحكّم في جهازك من جهاز آخر يحتاج خدمة إتاحة CoreMeet (أندرويد). iOS لا يمكن التحكّم فيه."
+  "ctlAndroidTargetNote": "التحكّم في جهازك من جهاز آخر يحتاج خدمة إتاحة كلاود ميت (أندرويد). iOS لا يمكن التحكّم فيه."
 }

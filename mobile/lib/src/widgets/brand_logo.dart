@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../theme/app_theme.dart';
 
-/// CoreMeet wordmark: the logo asset plus the name.
+/// Cloud Meet wordmark: the logo asset plus the name.
 class BrandLogo extends StatelessWidget {
   const BrandLogo({super.key, this.size = 28, this.showName = true});
 
@@ -21,7 +21,7 @@ class BrandLogo extends StatelessWidget {
         if (showName) ...[
           SizedBox(width: size * 0.32),
           Text(
-            'CoreMeet',
+            'Cloud Meet',
             style: TextStyle(
               fontSize: size * 0.66,
               fontWeight: FontWeight.w700,

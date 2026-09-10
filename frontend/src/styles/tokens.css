@@ -1,9 +1,9 @@
-/* CoreMeet design tokens
+/* Cloud Meet design tokens
    ------------------------------------------------------------------
    Light is the default. Dark is opt-in via <html data-theme="dark">.
 */
 :root {
-  /* Brand — emerald green from the CoreMeet logo */
+  /* Brand — emerald green from the Cloud Meet logo */
   --brand-50:  #e9f9ef;
   --brand-100: #c9f0d8;
   --brand-200: #97e2b5;

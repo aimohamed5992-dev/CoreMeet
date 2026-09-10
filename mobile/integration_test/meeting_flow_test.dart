@@ -37,7 +37,7 @@ void main() {
     await tester.pumpWidget(
       UncontrolledProviderScope(
         container: container,
-        child: const CoreMeetApp(),
+        child: const CloudMeetApp(),
       ),
     );
     await tester.pumpAndSettle(const Duration(seconds: 3));

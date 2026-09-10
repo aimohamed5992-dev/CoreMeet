@@ -3,7 +3,7 @@ import type { CSSProperties } from "react";
 type LogoProps = {
   /** Height of the mark in px. Wordmark scales with it. */
   size?: number;
-  /** Show the "CoreMeet" wordmark next to the mark. */
+  /** Show the "Cloud Meet" wordmark next to the mark. */
   withWordmark?: boolean;
   /** Force a single color (e.g. "#fff" on dark surfaces). Defaults to brand green. */
   tone?: "brand" | "mono-light" | "mono-dark";
@@ -12,7 +12,7 @@ type LogoProps = {
 };
 
 /**
- * CoreMeet brand mark — a rounded camera body with a lens ring and a
+ * Cloud Meet brand mark — a rounded camera body with a lens ring and a
  * triangular viewfinder, echoing the supplied logo.
  */
 export function LogoMark({ size = 32, tone = "brand" }: Pick<LogoProps, "size" | "tone">) {
@@ -24,7 +24,7 @@ export function LogoMark({ size = 32, tone = "brand" }: Pick<LogoProps, "size" |
       height={size}
       viewBox="0 0 48 48"
       role="img"
-      aria-label="CoreMeet"
+      aria-label="Cloud Meet"
       style={{ flex: "none" }}
     >
       <path
@@ -58,7 +58,7 @@ export default function Logo({ size = 30, withWordmark = true, tone = "brand", s
             lineHeight: 1,
           }}
         >
-          Core<span style={{ color: accentColor }}>Meet</span>
+          Cloud&nbsp;<span style={{ color: accentColor }}>Meet</span>
         </span>
       )}
     </span>

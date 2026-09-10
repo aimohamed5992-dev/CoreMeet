@@ -14,7 +14,7 @@ Future<void> main() async {
       overrides: [
         sharedPreferencesProvider.overrideWithValue(prefs),
       ],
-      child: const CoreMeetApp(),
+      child: const CloudMeetApp(),
     ),
   );
 }

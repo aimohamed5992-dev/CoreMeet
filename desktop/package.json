@@ -1,10 +1,10 @@
 {
   "name": "coremeet-desktop",
-  "productName": "CoreMeet",
-  "version": "0.2.0",
+  "productName": "Cloud Meet",
+  "version": "0.3.0",
   "private": true,
-  "description": "CoreMeet desktop app for Windows and macOS — the full meeting experience, plus screen control.",
-  "author": "CoreMeet",
+  "description": "Cloud Meet desktop app for Windows and macOS — the full meeting experience, plus screen control.",
+  "author": "Cloud Meet",
   "license": "MIT",
   "main": "src/main.js",
   "scripts": {
@@ -25,8 +25,8 @@
   },
   "build": {
     "appId": "com.coremeet.desktop",
-    "productName": "CoreMeet",
-    "artifactName": "CoreMeet-${version}-${arch}.${ext}",
+    "productName": "Cloud Meet",
+    "artifactName": "CloudMeet-${version}-${arch}.${ext}",
     "files": [
       "src/**/*",
       "app/**/*",
@@ -45,9 +45,9 @@
       ],
       "icon": "assets/icon.png",
       "extendInfo": {
-        "NSCameraUsageDescription": "CoreMeet uses your camera so others in the meeting can see you.",
-        "NSMicrophoneUsageDescription": "CoreMeet uses your microphone so others in the meeting can hear you.",
-        "NSAccessibilityUsageDescription": "CoreMeet needs Accessibility access to move the pointer and type when you grant remote control of your screen."
+        "NSCameraUsageDescription": "Cloud Meet uses your camera so others in the meeting can see you.",
+        "NSMicrophoneUsageDescription": "Cloud Meet uses your microphone so others in the meeting can hear you.",
+        "NSAccessibilityUsageDescription": "Cloud Meet needs Accessibility access to move the pointer and type when you grant remote control of your screen."
       }
     },
     "win": {

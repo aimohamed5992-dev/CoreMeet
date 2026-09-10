@@ -39,7 +39,7 @@ void main() {
     debugPrint('ROOM_CODE $code');
 
     await tester.pumpWidget(
-      UncontrolledProviderScope(container: container, child: const CoreMeetApp()),
+      UncontrolledProviderScope(container: container, child: const CloudMeetApp()),
     );
     await tester.pumpAndSettle(const Duration(seconds: 3));
 

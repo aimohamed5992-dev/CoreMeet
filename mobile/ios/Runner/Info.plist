@@ -3,13 +3,13 @@
 <plist version="1.0">
 <dict>
 	<key>NSCameraUsageDescription</key>
-	<string>CoreMeet uses your camera so others in the meeting can see you.</string>
+	<string>Cloud Meet uses your camera so others in the meeting can see you.</string>
 	<key>NSMicrophoneUsageDescription</key>
-	<string>CoreMeet uses your microphone so others in the meeting can hear you.</string>
+	<string>Cloud Meet uses your microphone so others in the meeting can hear you.</string>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>
-	<string>CoreMeet</string>
+	<string>Cloud Meet</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>

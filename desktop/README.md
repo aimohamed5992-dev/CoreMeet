@@ -1,6 +1,6 @@
-# CoreMeet Desktop
+# Cloud Meet Desktop
 
-The full CoreMeet meeting app packaged for **Windows and macOS** (Electron),
+The full Cloud Meet meeting app packaged for **Windows and macOS** (Electron),
 loading the same web UI and hitting the same backend. Unlike the browser, the
 desktop app can **share the screen natively** and **be remotely controlled** —
 input injection is built in, so no separate helper is needed.
@@ -32,9 +32,9 @@ npm start          # builds frontend → app/, then launches Electron
 ## Package installers
 
 ```bash
-npm run dist:mac     # dist/CoreMeet-<v>-universal.dmg   (Intel + Apple Silicon)
-npm run dist:win     # dist/CoreMeet-<v>-x64.exe         (NSIS installer)
-npm run dist:linux   # dist/CoreMeet-<v>-x86_64.AppImage
+npm run dist:mac     # dist/CloudMeet-<v>-universal.dmg   (Intel + Apple Silicon)
+npm run dist:win     # dist/CloudMeet-<v>-x64.exe         (NSIS installer)
+npm run dist:linux   # dist/CloudMeet-<v>-x86_64.AppImage
 ```
 
 Each script runs `npm run sync` first (frontend build → `app/`). Windows is

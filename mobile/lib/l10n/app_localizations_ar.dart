@@ -9,7 +9,7 @@ class LAr extends L {
   LAr([String locale = 'ar']) : super(locale);
 
   @override
-  String get appName => 'CoreMeet';
+  String get appName => 'كلاود ميت';
 
   @override
   String get langName => 'العربية';
@@ -72,7 +72,7 @@ class LAr extends L {
   String get loginCta => 'تسجيل الدخول';
 
   @override
-  String get loginNoAccount => 'جديد على CoreMeet؟';
+  String get loginNoAccount => 'جديد على كلاود ميت؟';
 
   @override
   String get loginCreateAccount => 'أنشئ حسابًا';
@@ -117,7 +117,7 @@ class LAr extends L {
   String get errorEmailExists => 'يوجد حساب بهذا البريد الإلكتروني بالفعل.';
 
   @override
-  String get errorNetwork => 'تعذّر الوصول إلى CoreMeet. تحقّق من اتصالك.';
+  String get errorNetwork => 'تعذّر الوصول إلى كلاود ميت. تحقّق من اتصالك.';
 
   @override
   String get errorGeneric => 'حدث خطأ ما. من فضلك حاول مجددًا.';
@@ -413,5 +413,5 @@ class LAr extends L {
   String get ctlDeniedDenied => 'تم رفض الطلب';
 
   @override
-  String get ctlAndroidTargetNote => 'التحكّم في جهازك من جهاز آخر يحتاج خدمة إتاحة CoreMeet (أندرويد). iOS لا يمكن التحكّم فيه.';
+  String get ctlAndroidTargetNote => 'التحكّم في جهازك من جهاز آخر يحتاج خدمة إتاحة كلاود ميت (أندرويد). iOS لا يمكن التحكّم فيه.';
 }

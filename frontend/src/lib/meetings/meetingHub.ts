@@ -11,7 +11,7 @@ export type RoomPeer = {
   desktop?: boolean;
 };
 
-/** "desktop" for the CoreMeet desktop app; undefined for a browser. */
+/** "desktop" for the Cloud Meet desktop app; undefined for a browser. */
 const clientKind = () =>
   (window as unknown as { coremeetDesktop?: unknown }).coremeetDesktop
     ? "desktop"

@@ -1,6 +1,6 @@
 {
   "@@locale": "en",
-  "appName": "CoreMeet",
+  "appName": "Cloud Meet",
 
   "langName": "English",
   "switchToArabic": "العربية",
@@ -26,7 +26,7 @@
   "loginTitle": "Welcome back",
   "loginSubtitle": "Sign in to start or join a meeting.",
   "loginCta": "Sign in",
-  "loginNoAccount": "New to CoreMeet?",
+  "loginNoAccount": "New to Cloud Meet?",
   "loginCreateAccount": "Create an account",
 
   "registerTitle": "Create your account",
@@ -45,7 +45,7 @@
 
   "errorInvalidCredentials": "Invalid email or password.",
   "errorEmailExists": "An account with this email already exists.",
-  "errorNetwork": "Can’t reach CoreMeet. Check your connection.",
+  "errorNetwork": "Can’t reach Cloud Meet. Check your connection.",
   "errorGeneric": "Something went wrong. Please try again.",
   "errorSignInFailed": "Could not sign you in.",
   "errorCreateFailed": "Could not create your account.",
@@ -150,5 +150,5 @@
   "ctlDeniedBusy": "Someone else is already controlling",
   "ctlDeniedNotSharing": "They stopped sharing their screen",
   "ctlDeniedDenied": "Request declined",
-  "ctlAndroidTargetNote": "Being controlled from another device needs the CoreMeet accessibility service (Android). iOS can’t be controlled."
+  "ctlAndroidTargetNote": "Being controlled from another device needs the Cloud Meet accessibility service (Android). iOS can’t be controlled."
 }

@@ -98,7 +98,7 @@ abstract class L {
   /// No description provided for @appName.
   ///
   /// In en, this message translates to:
-  /// **'CoreMeet'**
+  /// **'Cloud Meet'**
   String get appName;
 
   /// No description provided for @langName.
@@ -224,7 +224,7 @@ abstract class L {
   /// No description provided for @loginNoAccount.
   ///
   /// In en, this message translates to:
-  /// **'New to CoreMeet?'**
+  /// **'New to Cloud Meet?'**
   String get loginNoAccount;
 
   /// No description provided for @loginCreateAccount.
@@ -314,7 +314,7 @@ abstract class L {
   /// No description provided for @errorNetwork.
   ///
   /// In en, this message translates to:
-  /// **'Can’t reach CoreMeet. Check your connection.'**
+  /// **'Can’t reach Cloud Meet. Check your connection.'**
   String get errorNetwork;
 
   /// No description provided for @errorGeneric.
@@ -854,7 +854,7 @@ abstract class L {
   /// No description provided for @ctlAndroidTargetNote.
   ///
   /// In en, this message translates to:
-  /// **'Being controlled from another device needs the CoreMeet accessibility service (Android). iOS can’t be controlled.'**
+  /// **'Being controlled from another device needs the Cloud Meet accessibility service (Android). iOS can’t be controlled.'**
   String get ctlAndroidTargetNote;
 }
 
