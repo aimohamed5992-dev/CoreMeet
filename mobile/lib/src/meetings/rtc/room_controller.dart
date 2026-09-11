@@ -12,7 +12,15 @@ import 'meeting_hub.dart';
 import 'meeting_media.dart';
 import 'peer_mesh.dart';
 
-enum RoomPhase { connecting, connected, reconnecting, disconnected, error }
+enum RoomPhase {
+  connecting,
+  waitingForHost,
+  connected,
+  reconnecting,
+  disconnected,
+  denied,
+  error,
+}
 
 enum ControlRequestState { idle, requesting, denied }
 
@@ -233,6 +241,24 @@ class RoomController extends StateNotifier<RoomState> {
         final msg = a != null && a.isNotEmpty ? '${a.first}' : null;
         state = state.copyWith(phase: RoomPhase.error, error: msg);
       });
+
+      // ---- host-approval "knock to join" ----
+      // The host is admitted immediately server-side; anyone else waits here
+      // until the host admits them from the web/desktop app (there's no
+      // in-app admit UI on mobile yet).
+      hub.on('joinPending', (_) {
+        if (!_disposed) state = state.copyWith(phase: RoomPhase.waitingForHost);
+      });
+      hub.on('joinDenied', (_) {
+        if (!_disposed) state = state.copyWith(phase: RoomPhase.denied);
+      });
+      hub.on('joinApproved', (_) {
+        if (_disposed) return;
+        _setConnected(joined.me.id, true);
+        state = state.copyWith(phase: RoomPhase.connected, selfConnectionId: hub.connectionId);
+        _announce();
+      });
+
       _wireControlHandlers(hub);
 
       final mesh = PeerMesh(hub, _onRemoteFeed);
@@ -250,22 +276,16 @@ class RoomController extends StateNotifier<RoomState> {
       });
       hub.onReconnected(() async {
         if (_disposed) return;
-        state = state.copyWith(phase: RoomPhase.connected);
+        // Re-admission (joinApproved/joinPending) drives phase from here.
         await hub.joinRoom(code, joined.me.id);
-        _announce();
       });
       hub.onClose(() {
         if (!_disposed) state = state.copyWith(phase: RoomPhase.disconnected);
       });
 
+      // phase moves to waitingForHost / connected via the joinPending /
+      // joinApproved handlers above once the server responds.
       await hub.joinRoom(code, joined.me.id);
-      if (_disposed) return;
-      _setConnected(joined.me.id, true);
-      state = state.copyWith(
-        phase: RoomPhase.connected,
-        selfConnectionId: hub.connectionId,
-      );
-      _announce();
     } catch (e) {
       debugPrint('room start failed: $e');
       if (!_disposed) {

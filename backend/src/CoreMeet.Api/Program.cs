@@ -86,6 +86,7 @@ builder.Services.AddScoped<AuthService>();
 builder.Services.AddScoped<MeetingService>();
 builder.Services.AddSingleton<MeetingConnectionRegistry>();
 builder.Services.AddSingleton<ControlRegistry>();
+builder.Services.AddSingleton<JoinRequestRegistry>();
 builder.Services.AddSignalR();
 
 const string CorsPolicy = "coremeet-web";

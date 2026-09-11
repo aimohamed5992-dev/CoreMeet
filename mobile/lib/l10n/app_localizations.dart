@@ -683,6 +683,30 @@ abstract class L {
   /// **'The meeting may have ended or the link is invalid.'**
   String get roomCantJoinText;
 
+  /// No description provided for @roomWaitingTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Waiting for the host'**
+  String get roomWaitingTitle;
+
+  /// No description provided for @roomWaitingText.
+  ///
+  /// In en, this message translates to:
+  /// **'The host will let you in shortly. Keep this screen open.'**
+  String get roomWaitingText;
+
+  /// No description provided for @roomDeniedTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'You weren’t let in'**
+  String get roomDeniedTitle;
+
+  /// No description provided for @roomDeniedText.
+  ///
+  /// In en, this message translates to:
+  /// **'The host didn’t admit you to this meeting.'**
+  String get roomDeniedText;
+
   /// No description provided for @roomMediaBlocked.
   ///
   /// In en, this message translates to:

@@ -321,6 +321,18 @@ class LAr extends L {
   String get roomCantJoinText => 'قد يكون الاجتماع انتهى أو الرابط غير صحيح.';
 
   @override
+  String get roomWaitingTitle => 'بانتظار موافقة المضيف';
+
+  @override
+  String get roomWaitingText => 'سيسمح لك المضيف بالدخول قريبًا. اترك هذه الشاشة مفتوحة.';
+
+  @override
+  String get roomDeniedTitle => 'لم يُسمح لك بالدخول';
+
+  @override
+  String get roomDeniedText => 'لم يقبل المضيف انضمامك لهذا الاجتماع.';
+
+  @override
   String get roomMediaBlocked => 'الكاميرا والمايك محظوران. لا يزال بإمكانك رؤية وسماع الآخرين.';
 
   @override

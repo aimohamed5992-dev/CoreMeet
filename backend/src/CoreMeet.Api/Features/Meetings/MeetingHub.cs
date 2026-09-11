@@ -10,14 +10,19 @@ namespace CoreMeet.Api.Features.Meetings;
 /// Real-time meeting channel: presence, chat, and WebRTC signaling relay.
 /// Clients call <c>JoinRoom</c> first; everything else is scoped to that room.
 /// </summary>
-public class MeetingHub(AppDbContext db, MeetingConnectionRegistry registry, ControlRegistry control) : Hub
+public class MeetingHub(AppDbContext db, MeetingConnectionRegistry registry, ControlRegistry control, JoinRequestRegistry joinRequests) : Hub
 {
     // ---- Presence -------------------------------------------------
+    //
+    // The host is admitted straight in. Anyone else "knocks": they're held in
+    // JoinRequestRegistry (never added to the live room / SignalR group) until
+    // the host calls AdmitParticipant. A brief reconnect (network blip, page
+    // refresh) within 30s of dropping skips the knock again.
+
+    private static readonly TimeSpan ReconnectGrace = TimeSpan.FromSeconds(30);
 
     public async Task JoinRoom(string code, Guid participantId, string? client = null)
     {
-        var isDesktop = string.Equals(client, "desktop", StringComparison.OrdinalIgnoreCase);
-
         var participant = await db.MeetingParticipants
             .Include(p => p.Meeting)
             .Include(p => p.User)
@@ -29,11 +34,83 @@ public class MeetingHub(AppDbContext db, MeetingConnectionRegistry registry, Con
             return;
         }
 
+        var isHost = participant.Role == ParticipantRole.Host;
+        var recentlyConnected = participant.IsConnected ||
+            (participant.LeftAt is { } left && DateTime.UtcNow - left < ReconnectGrace);
+
+        if (!isHost && !recentlyConnected)
+        {
+            var avatarColor = participant.User?.AvatarColor ?? participant.AvatarColor;
+            var avatarUrl = participant.User?.AvatarUrl ?? participant.AvatarUrl;
+            joinRequests.Add(new JoinRequest(
+                Context.ConnectionId, code, participantId, participant.DisplayName, avatarColor, avatarUrl, client));
+
+            await Clients.Caller.SendAsync("joinPending");
+
+            var hostConnections = registry.InRoom(code).Where(c => c.IsHost);
+            foreach (var h in hostConnections)
+                await Clients.Client(h.ConnectionId).SendAsync("joinRequested", new
+                {
+                    connectionId = Context.ConnectionId,
+                    participantId,
+                    displayName = participant.DisplayName,
+                    avatarColor,
+                    avatarUrl,
+                });
+            return;
+        }
+
+        await AdmitToRoomAsync(code, Context.ConnectionId, participant, client);
+
+        if (isHost)
+        {
+            // I'm the host arriving — hand me anyone who's been knocking.
+            foreach (var pending in joinRequests.InRoom(code))
+                await Clients.Caller.SendAsync("joinRequested", new
+                {
+                    connectionId = pending.ConnectionId,
+                    participantId = pending.ParticipantId,
+                    displayName = pending.DisplayName,
+                    avatarColor = pending.AvatarColor,
+                    avatarUrl = pending.AvatarUrl,
+                });
+        }
+    }
+
+    /// <summary>The host admits (or denies) a pending join request.</summary>
+    public async Task AdmitParticipant(string connectionId, bool granted)
+    {
+        var host = registry.Get(Context.ConnectionId);
+        if (host is null || !host.IsHost) return;
+
+        var pending = joinRequests.Remove(connectionId);
+        if (pending is null || pending.Code != host.Code) return;
+
+        if (!granted)
+        {
+            await Clients.Client(connectionId).SendAsync("joinDenied");
+            return;
+        }
+
+        var participant = await db.MeetingParticipants
+            .Include(p => p.Meeting)
+            .Include(p => p.User)
+            .FirstOrDefaultAsync(p => p.Id == pending.ParticipantId);
+        if (participant is null) return;
+
+        await AdmitToRoomAsync(pending.Code, connectionId, participant, pending.Client);
+    }
+
+    /// <summary>Adds a connection to the live room: registry, WebRTC roster, control state.</summary>
+    private async Task AdmitToRoomAsync(string code, string connectionId, MeetingParticipant participant, string? client)
+    {
+        var isDesktop = string.Equals(client, "desktop", StringComparison.OrdinalIgnoreCase);
+
         participant.IsConnected = true;
         participant.LeftAt = null;
         await db.SaveChangesAsync();
 
-        await Groups.AddToGroupAsync(Context.ConnectionId, code);
+        await Groups.AddToGroupAsync(connectionId, code);
 
         var avatarColor = participant.User?.AvatarColor ?? participant.AvatarColor;
         var avatarUrl = participant.User?.AvatarUrl ?? participant.AvatarUrl;
@@ -47,13 +124,14 @@ public class MeetingHub(AppDbContext db, MeetingConnectionRegistry registry, Con
             .ToList();
 
         registry.Add(new ConnectionInfo(
-            Context.ConnectionId, code, participantId, participant.DisplayName, avatarColor, avatarUrl)
+            connectionId, code, participant.Id, participant.DisplayName, avatarColor, avatarUrl)
         {
             IsDesktop = isDesktop,
+            IsHost = participant.Role == ParticipantRole.Host,
         });
 
         // Tell the newcomer who's already here (they will initiate the WebRTC offers).
-        await Clients.Caller.SendAsync("roomPeers", peers);
+        await Clients.Client(connectionId).SendAsync("roomPeers", peers);
 
         // Bring the newcomer up to speed on any active screen-control session.
         var sessions = control.InRoom(code)
@@ -65,20 +143,25 @@ public class MeetingHub(AppDbContext db, MeetingConnectionRegistry registry, Con
             })
             .ToList();
         if (sessions.Count > 0)
-            await Clients.Caller.SendAsync("controlSessions", sessions);
+            await Clients.Client(connectionId).SendAsync("controlSessions", sessions);
 
-        // Tell everyone else about the newcomer.
+        // Tell everyone else about the newcomer. GroupExcept (not OthersInGroup)
+        // because this can be called by the host on the admittee's behalf
+        // (AdmitParticipant) — "others" must exclude the newcomer, not the caller.
         var payload = new
         {
-            connectionId = Context.ConnectionId,
-            participantId,
+            connectionId,
+            participantId = participant.Id,
             displayName = participant.DisplayName,
             avatarColor,
             avatarUrl,
             role = participant.Role.ToString(),
             desktop = isDesktop,
         };
-        await Clients.OthersInGroup(code).SendAsync("peerJoined", payload);
+        await Clients.GroupExcept(code, [connectionId]).SendAsync("peerJoined", payload);
+
+        // Finally, tell the newcomer they're fully in (unblocks their "waiting for host" UI).
+        await Clients.Client(connectionId).SendAsync("joinApproved");
     }
 
     public async Task LeaveRoom()
@@ -94,6 +177,14 @@ public class MeetingHub(AppDbContext db, MeetingConnectionRegistry registry, Con
 
     private async Task HandleDisconnect()
     {
+        var pending = joinRequests.Remove(Context.ConnectionId);
+        if (pending is not null)
+        {
+            // A knocking connection went away before the host responded.
+            foreach (var h in registry.InRoom(pending.Code).Where(c => c.IsHost))
+                await Clients.Client(h.ConnectionId).SendAsync("joinRequestCancelled", Context.ConnectionId);
+        }
+
         var info = registry.Remove(Context.ConnectionId);
         if (info is null) return;
 

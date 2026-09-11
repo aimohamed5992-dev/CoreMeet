@@ -60,6 +60,8 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             e.Property(p => p.DisplayName).HasMaxLength(120).IsRequired();
             e.Property(p => p.AvatarColor).HasMaxLength(9);
             e.Property(p => p.AvatarUrl).HasColumnType("mediumtext");
+            e.Property(p => p.GuestKey).HasMaxLength(80);
+            e.HasIndex(p => new { p.MeetingId, p.GuestKey });
             e.HasOne(p => p.Meeting)
                 .WithMany(m => m.Participants)
                 .HasForeignKey(p => p.MeetingId)

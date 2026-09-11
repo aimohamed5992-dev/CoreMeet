@@ -16,10 +16,13 @@ import ChatPanel from "./ChatPanel";
 import DeviceMenu from "./DeviceMenu";
 import ControlLayer from "./ControlLayer";
 import ControlBanner from "./ControlBanner";
+import JoinRequestsBar from "./JoinRequestsBar";
 import { useControlAgent } from "../../lib/meetings/useControlAgent";
+import { useRecording } from "../../lib/meetings/useRecording";
 import {
   MicIcon, MicOffIcon, CamIcon, CamOffIcon,
-  PresentIcon, PresentOffIcon, ChatIcon, PeopleIcon, CallEndIcon, TuneIcon, LinkIcon,
+  PresentIcon, PresentOffIcon, RecordIcon, RecordStopIcon,
+  ChatIcon, PeopleIcon, CallEndIcon, TuneIcon, LinkIcon,
 } from "../../components/meet-icons";
 import "./MeetingPage.css";
 
@@ -32,7 +35,7 @@ export default function MeetingPage({
 }: {
   code: string;
   media: MediaControls;
-  guest?: { displayName: string; avatarUrl: string | null };
+  guest?: { displayName: string; avatarUrl: string | null; key?: string };
 }) {
   const navigate = useNavigate();
   const { t } = useTranslation();
@@ -48,6 +51,7 @@ export default function MeetingPage({
   const spotlightRef = useRef<HTMLDivElement>(null);
 
   const { control } = room;
+  const recording = useRecording();
   // Probe for the local agent while a request is pending too, so the consent
   // prompt can warn if input injection won't be possible.
   const agent = useControlAgent(
@@ -126,6 +130,28 @@ export default function MeetingPage({
     );
   }
 
+  if (room.connState === "waitingForHost") {
+    return (
+      <div className="room room--message">
+        <Logo size={32} />
+        <h1>{t("room.waitingTitle")}</h1>
+        <p>{t("room.waitingText")}</p>
+        <button className="btn btn--ghost" onClick={leave}>{t("room.cancelWaiting")}</button>
+      </div>
+    );
+  }
+
+  if (room.connState === "denied") {
+    return (
+      <div className="room room--message">
+        <Logo size={32} />
+        <h1>{t("room.deniedTitle")}</h1>
+        <p>{t("room.deniedText")}</p>
+        <button className="btn btn--primary" onClick={leave}>{t("common.backToHome")}</button>
+      </div>
+    );
+  }
+
   // ---- tiles -----------------------------------------------------
   const selfTile = {
     key: "self",
@@ -169,6 +195,29 @@ export default function MeetingPage({
   const controllingPresenter =
     !!presenter && !presenter.isSelf && control.controlling?.connectionId === presenter.key;
   const requestControl = () => presenter && !presenter.isSelf && control.request(presenter.key);
+
+  // Only one screen share at a time — block starting a new one while someone
+  // else is already presenting (the UI could only spotlight one anyway).
+  const someoneElseSharing = !!presenter && !presenter.isSelf;
+  const toggleScreenShare = () => {
+    if (someoneElseSharing && !media.sharingScreen) return;
+    media.toggleScreenShare();
+  };
+
+  // Local recording: whatever is spotlighted (the shared screen when someone's
+  // presenting, otherwise your own camera), with everyone's audio mixed in.
+  const toggleRecording = () => {
+    if (recording.status === "recording") {
+      recording.stop();
+      return;
+    }
+    const videoTrack = presenter
+      ? presenter.isSelf
+        ? (media.stream?.getVideoTracks()[0] ?? null)
+        : (room.remoteFeeds.find((f) => f.connectionId === presenter.key)?.stream.getVideoTracks()[0] ?? null)
+      : (media.stream?.getVideoTracks()[0] ?? null);
+    recording.start(videoTrack, [media.stream, ...room.remoteFeeds.map((f) => f.stream)]);
+  };
 
   const renderTile = (t: (typeof allTiles)[number], big = false) => (
     <VideoTile
@@ -219,6 +268,7 @@ export default function MeetingPage({
         onStop={control.stop}
         agentStatus={agent.status}
       />
+      {isHost && <JoinRequestsBar requests={room.joinRequests} onAdmit={room.admitJoinRequest} />}
 
       <div className="room__body">
         <main className={`room__stage ${presenter ? "room__stage--present" : ""}`}>
@@ -301,12 +351,28 @@ export default function MeetingPage({
         </button>
         <button
           className={`meet-btn ${media.sharingScreen ? "meet-btn--active" : ""}`}
-          onClick={media.toggleScreenShare}
-          disabled={!media.stream}
-          title={media.sharingScreen ? t("room.stopPresentTitle") : t("room.presentTitle")}
+          onClick={toggleScreenShare}
+          disabled={!media.stream || (someoneElseSharing && !media.sharingScreen)}
+          title={
+            someoneElseSharing && !media.sharingScreen
+              ? t("room.presentBlockedTitle")
+              : media.sharingScreen
+                ? t("room.stopPresentTitle")
+                : t("room.presentTitle")
+          }
         >
           {media.sharingScreen ? <PresentOffIcon /> : <PresentIcon />}
         </button>
+        {recording.supported && (
+          <button
+            className={`meet-btn ${recording.status === "recording" ? "meet-btn--active" : ""}`}
+            onClick={toggleRecording}
+            disabled={!media.stream}
+            title={recording.status === "recording" ? t("room.stopRecordTitle") : t("room.recordTitle")}
+          >
+            {recording.status === "recording" ? <RecordStopIcon /> : <RecordIcon />}
+          </button>
+        )}
 
         <div className="room__settings" ref={settingsRef}>
           <button

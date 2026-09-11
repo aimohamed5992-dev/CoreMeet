@@ -49,7 +49,7 @@ export default function MeetingRoute() {
   const isGuest = status !== "authenticated";
 
   const join = () => {
-    if (isGuest) saveGuestIdentity({ name: guestName.trim(), avatarUrl: guestAvatar });
+    if (isGuest) saveGuestIdentity({ name: guestName.trim(), avatarUrl: guestAvatar, key: remembered.key });
     setJoined(true);
   };
 
@@ -75,7 +75,7 @@ export default function MeetingRoute() {
     <MeetingPage
       code={code}
       media={media}
-      guest={isGuest ? { displayName: guestName.trim() || t("common.guest"), avatarUrl: guestAvatar } : undefined}
+      guest={isGuest ? { displayName: guestName.trim() || t("common.guest"), avatarUrl: guestAvatar, key: remembered.key } : undefined}
     />
   );
 }

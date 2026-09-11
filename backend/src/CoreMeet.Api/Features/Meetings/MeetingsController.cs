@@ -44,7 +44,7 @@ public class MeetingsController(MeetingService meetings, ICurrentUser currentUse
             avatar = null; // silently drop an oversized / unsupported guest avatar
         }
 
-        var result = await meetings.JoinAsync(code, currentUser.UserId, req.DisplayName, avatar, ct);
+        var result = await meetings.JoinAsync(code, currentUser.UserId, req.DisplayName, avatar, req.GuestKey, ct);
         return result is null
             ? NotFound(new { message = "This meeting is not available." })
             : Ok(result);

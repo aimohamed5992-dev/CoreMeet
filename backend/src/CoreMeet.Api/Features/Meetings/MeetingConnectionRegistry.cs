@@ -15,6 +15,9 @@ public record ConnectionInfo(
 
     /// <summary>True for the CoreMeet desktop app — only it can be a remote-control target.</summary>
     public bool IsDesktop { get; set; }
+
+    /// <summary>True for the meeting's host — hosts skip the join-approval gate and admit others.</summary>
+    public bool IsHost { get; set; }
 }
 
 /// <summary>

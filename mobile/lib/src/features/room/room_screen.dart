@@ -174,6 +174,25 @@ class _RoomScreenState extends ConsumerState<RoomScreen> {
       );
     }
 
+    if (room.phase == RoomPhase.waitingForHost) {
+      return _ErrorScreen(
+        title: l10n.roomWaitingTitle,
+        message: l10n.roomWaitingText,
+        buttonLabel: l10n.commonCancel,
+        onLeave: () =>
+            context.canPop() ? context.pop() : context.go(Routes.dashboard),
+      );
+    }
+
+    if (room.phase == RoomPhase.denied) {
+      return _ErrorScreen(
+        title: l10n.roomDeniedTitle,
+        message: l10n.roomDeniedText,
+        onLeave: () =>
+            context.canPop() ? context.pop() : context.go(Routes.dashboard),
+      );
+    }
+
     final byId = {for (final p in room.participants) p.id: p};
 
     final tiles = <Widget>[
@@ -544,9 +563,16 @@ class _PeopleSheet extends StatelessWidget {
 }
 
 class _ErrorScreen extends StatelessWidget {
-  const _ErrorScreen({required this.message, required this.onLeave});
+  const _ErrorScreen({
+    required this.message,
+    required this.onLeave,
+    this.title,
+    this.buttonLabel,
+  });
   final String message;
   final VoidCallback onLeave;
+  final String? title;
+  final String? buttonLabel;
 
   @override
   Widget build(BuildContext context) {
@@ -560,7 +586,7 @@ class _ErrorScreen extends StatelessWidget {
             children: [
               const BrandLogo(size: 32),
               const SizedBox(height: 18),
-              Text(l10n.roomCantJoinTitle,
+              Text(title ?? l10n.roomCantJoinTitle,
                   style: Theme.of(context)
                       .textTheme
                       .titleMedium
@@ -568,7 +594,10 @@ class _ErrorScreen extends StatelessWidget {
               const SizedBox(height: 6),
               Text(message, textAlign: TextAlign.center),
               const SizedBox(height: 20),
-              FilledButton(onPressed: onLeave, child: Text(l10n.commonContinue)),
+              FilledButton(
+                onPressed: onLeave,
+                child: Text(buttonLabel ?? l10n.commonContinue),
+              ),
             ],
           ),
         ),

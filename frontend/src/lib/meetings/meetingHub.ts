@@ -87,6 +87,11 @@ export class MeetingHub {
     return this.connection.invoke("RenameMeeting", title).catch(() => undefined);
   }
 
+  /** Host admits (or denies) a pending "knock to join" request. */
+  admitParticipant(connectionId: string, granted: boolean) {
+    return this.connection.invoke("AdmitParticipant", connectionId, granted).catch(() => undefined);
+  }
+
   setMediaState(audio: boolean, video: boolean, screen: boolean) {
     return this.connection.invoke("SetMediaState", audio, video, screen).catch(() => undefined);
   }

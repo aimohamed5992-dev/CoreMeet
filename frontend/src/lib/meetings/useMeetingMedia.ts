@@ -47,6 +47,13 @@ export function useMeetingMedia(enabled: boolean): MediaControls {
   const audioCb = useRef<((t: MediaStreamTrack | null) => void) | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
   streamRef.current = stream;
+  // Some browsers/OSes silently end the mic or camera track mid-call (device
+  // reclaimed, driver hiccup, screen-share reconfiguring audio routing). Watch
+  // for that and transparently re-acquire + re-send the track instead of just
+  // going silent. `.stop()` never fires `ended` itself, so this only reacts to
+  // a track actually dying underneath us, not our own track swaps.
+  const recoverAudioRef = useRef<() => void>(() => {});
+  const recoverVideoRef = useRef<() => void>(() => {});
 
   // refs mirroring state so async callbacks read the latest value
   const videoOnRef = useRef(videoOn);
@@ -55,6 +62,49 @@ export function useMeetingMedia(enabled: boolean): MediaControls {
   audioOnRef.current = audioOn;
   const sharingScreenRef = useRef(sharingScreen);
   sharingScreenRef.current = sharingScreen;
+
+  const recoverAudio = useCallback(async () => {
+    const s = streamRef.current;
+    if (!s) return;
+    try {
+      const fresh = await navigator.mediaDevices.getUserMedia({
+        audio: { echoCancellation: true, noiseSuppression: true },
+      });
+      const track = fresh.getAudioTracks()[0];
+      if (!track) return;
+      track.enabled = audioOnRef.current;
+      track.onended = () => recoverAudioRef.current();
+      replaceTrackOfKind(s, "audio", track);
+      audioCb.current?.(track);
+      setCurrentMicId(track.getSettings().deviceId ?? null);
+    } catch {
+      /* mic became unavailable (unplugged, permission revoked) — leave it down */
+    }
+  }, []);
+  recoverAudioRef.current = recoverAudio;
+
+  const recoverVideo = useCallback(async () => {
+    const s = streamRef.current;
+    // Don't fight an active screen share — that "video track" ending is handled
+    // by getDisplayMedia's own onended (stop sharing), not this camera recovery.
+    if (!s || sharingScreenRef.current) return;
+    try {
+      const fresh = await navigator.mediaDevices.getUserMedia({
+        video: { width: { ideal: 1280 }, height: { ideal: 720 } },
+      });
+      const track = fresh.getVideoTracks()[0];
+      if (!track) return;
+      track.enabled = videoOnRef.current;
+      track.onended = () => recoverVideoRef.current();
+      cameraTrackRef.current = track;
+      replaceTrackOfKind(s, "video", track);
+      videoCb.current?.(videoOnRef.current ? track : null);
+      setCurrentCameraId(track.getSettings().deviceId ?? null);
+    } catch {
+      /* camera became unavailable — leave it off */
+    }
+  }, []);
+  recoverVideoRef.current = recoverVideo;
 
   const refreshDevices = useCallback(async () => {
     try {
@@ -84,8 +134,11 @@ export function useMeetingMedia(enabled: boolean): MediaControls {
           return;
         }
         cameraTrackRef.current = local.getVideoTracks()[0] ?? null;
+        if (cameraTrackRef.current) cameraTrackRef.current.onended = () => recoverVideoRef.current();
+        const initialAudio = local.getAudioTracks()[0];
+        if (initialAudio) initialAudio.onended = () => recoverAudioRef.current();
         setCurrentCameraId(cameraTrackRef.current?.getSettings().deviceId ?? null);
-        setCurrentMicId(local.getAudioTracks()[0]?.getSettings().deviceId ?? null);
+        setCurrentMicId(initialAudio?.getSettings().deviceId ?? null);
         setStream(local);
         setReady(true);
         refreshDevices();
@@ -137,6 +190,7 @@ export function useMeetingMedia(enabled: boolean): MediaControls {
       const track = fresh.getVideoTracks()[0];
       if (!track) return;
       track.enabled = videoOnRef.current;
+      track.onended = () => recoverVideoRef.current();
       cameraTrackRef.current = track;
       if (!sharingScreenRef.current) {
         replaceTrackOfKind(s, "video", track);
@@ -159,6 +213,7 @@ export function useMeetingMedia(enabled: boolean): MediaControls {
       const track = fresh.getAudioTracks()[0];
       if (!track) return;
       track.enabled = audioOnRef.current;
+      track.onended = () => recoverAudioRef.current();
       replaceTrackOfKind(s, "audio", track);
       audioCb.current?.(track);
       setCurrentMicId(deviceId);
@@ -179,6 +234,10 @@ export function useMeetingMedia(enabled: boolean): MediaControls {
         replaceTrackOfKind(s, "video", cam);
         videoCb.current?.(cam);
       }
+      // Re-affirm the mic track to every peer — cheap insurance against any
+      // sender left stale by the video swap (reported as "audio sometimes
+      // drops when someone shares their screen").
+      audioCb.current?.(s.getAudioTracks()[0] ?? null);
       setSharingScreen(false);
       return;
     }
@@ -193,9 +252,11 @@ export function useMeetingMedia(enabled: boolean): MediaControls {
           videoCb.current?.(cam);
         }
         screenTrackRef.current = null;
+        audioCb.current?.(s.getAudioTracks()[0] ?? null);
         setSharingScreen(false);
       };
       replaceTrackOfKind(s, "video", screenTrack);
+      audioCb.current?.(s.getAudioTracks()[0] ?? null);
       videoCb.current?.(screenTrack);
       setSharingScreen(true);
       setVideoOn(true);

@@ -318,6 +318,18 @@ class LEn extends L {
   String get roomCantJoinText => 'The meeting may have ended or the link is invalid.';
 
   @override
+  String get roomWaitingTitle => 'Waiting for the host';
+
+  @override
+  String get roomWaitingText => 'The host will let you in shortly. Keep this screen open.';
+
+  @override
+  String get roomDeniedTitle => 'You weren’t let in';
+
+  @override
+  String get roomDeniedText => 'The host didn’t admit you to this meeting.';
+
+  @override
   String get roomMediaBlocked => 'Camera and mic are blocked. You can still see and hear others.';
 
   @override

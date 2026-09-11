@@ -4,7 +4,22 @@ import { PeerMesh } from "./webrtc";
 import { meetingsApi } from "./meetingsApi";
 import type { ChatMessage, MeetingDetail, Participant } from "./types";
 
-type ConnState = "connecting" | "connected" | "reconnecting" | "disconnected" | "error";
+type ConnState =
+  | "connecting"
+  | "waitingForHost"
+  | "connected"
+  | "reconnecting"
+  | "disconnected"
+  | "denied"
+  | "error";
+
+export type JoinRequestItem = {
+  connectionId: string;
+  participantId: string;
+  displayName: string;
+  avatarColor: string;
+  avatarUrl: string | null;
+};
 
 export type RemoteFeed = { connectionId: string; participantId?: string; stream: MediaStream };
 export type RemoteMediaState = { audio: boolean; video: boolean; screen: boolean };
@@ -45,6 +60,9 @@ export type MeetingRoom = {
   replaceOutgoingAudio: (track: MediaStreamTrack | null) => void;
   broadcastMediaState: (audio: boolean, video: boolean, screen: boolean) => void;
   renameMeeting: (title: string) => void;
+  /** Host only: people currently knocking, waiting to be let in. */
+  joinRequests: JoinRequestItem[];
+  admitJoinRequest: (connectionId: string, granted: boolean) => void;
   control: ControlState;
 };
 
@@ -53,7 +71,7 @@ type Options = {
   /** Wait for the media layer to settle (granted or denied) before joining. */
   mediaSettled: boolean;
   /** Guest name + avatar when the viewer is not signed in. */
-  guest?: { displayName: string; avatarUrl: string | null };
+  guest?: { displayName: string; avatarUrl: string | null; key?: string };
 };
 
 /**
@@ -77,6 +95,7 @@ export function useMeetingRoom(code: string, { localStream, mediaSettled, guest 
   const [ctlDeniedReason, setCtlDeniedReason] = useState<string | null>(null);
   const [ctlSessions, setCtlSessions] = useState<Record<string, { controllerConnectionId: string; controllerName: string }>>({});
   const [desktopPeers, setDesktopPeers] = useState<Set<string>>(() => new Set());
+  const [joinRequests, setJoinRequests] = useState<JoinRequestItem[]>([]);
   const ctlPendingRequester = useRef<string | null>(null);
   const ctlEventCb = useRef<((json: string) => void) | null>(null);
 
@@ -172,6 +191,21 @@ export function useMeetingRoom(code: string, { localStream, mediaSettled, guest 
         );
         hub.on("error", (message: string) => setError(message));
 
+        // ---- host-approval "knock to join" ----
+        hub.on("joinPending", () => setConnState("waitingForHost"));
+        hub.on("joinDenied", () => setConnState("denied"));
+        hub.on("joinApproved", () => {
+          setConnState("connected");
+          upsertParticipant({ id: joined.me.id, isConnected: true });
+          announce();
+        });
+        hub.on("joinRequested", (r: JoinRequestItem) =>
+          setJoinRequests((prev) => (prev.some((x) => x.connectionId === r.connectionId) ? prev : [...prev, r])),
+        );
+        hub.on("joinRequestCancelled", (connectionId: string) =>
+          setJoinRequests((prev) => prev.filter((r) => r.connectionId !== connectionId)),
+        );
+
         // ---- remote control ----
         hub.on("controlRequested", (r: { connectionId: string; name: string }) => {
           ctlPendingRequester.current = r.connectionId;
@@ -220,9 +254,8 @@ export function useMeetingRoom(code: string, { localStream, mediaSettled, guest 
         );
 
         hub.onReconnected(async () => {
-          setConnState("connected");
+          // Re-admission (joinApproved/joinPending) drives connState from here.
           await hub.joinRoom(code, joined.me.id).catch(() => undefined);
-          announce();
         });
         hub.onClose(() => !disposed && setConnState("disconnected"));
 
@@ -238,10 +271,9 @@ export function useMeetingRoom(code: string, { localStream, mediaSettled, guest 
 
         await hub.start();
         if (disposed) return;
+        // connState moves to "waitingForHost" or "connected" via the joinPending
+        // / joinApproved events above once the server responds.
         await hub.joinRoom(code, joined.me.id);
-        setConnState("connected");
-        upsertParticipant({ id: joined.me.id, isConnected: true });
-        announce();
       } catch (e) {
         if (disposed) return;
         setError(
@@ -285,6 +317,11 @@ export function useMeetingRoom(code: string, { localStream, mediaSettled, guest 
     if (!trimmed) return;
     setMeeting((prev) => (prev ? { ...prev, title: trimmed } : prev)); // optimistic
     hubRef.current?.renameMeeting(trimmed);
+  }, []);
+
+  const admitJoinRequest = useCallback((connectionId: string, granted: boolean) => {
+    setJoinRequests((prev) => prev.filter((r) => r.connectionId !== connectionId));
+    hubRef.current?.admitParticipant(connectionId, granted);
   }, []);
 
   // ---- control actions ----
@@ -345,6 +382,8 @@ export function useMeetingRoom(code: string, { localStream, mediaSettled, guest 
     error,
     sendMessage,
     renameMeeting,
+    joinRequests,
+    admitJoinRequest,
     replaceOutgoingVideo,
     replaceOutgoingAudio,
     broadcastMediaState,

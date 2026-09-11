@@ -60,7 +60,7 @@ public class MeetingService(AppDbContext db)
         ["#1FA84C", "#2563EB", "#7C3AED", "#DB2777", "#EA580C", "#0891B2", "#CA8A04"];
 
     public async Task<JoinMeetingResponse?> JoinAsync(
-        string code, Guid? userId, string? displayName, string? avatarUrl, CancellationToken ct)
+        string code, Guid? userId, string? displayName, string? avatarUrl, string? guestKey, CancellationToken ct)
     {
         var meeting = await db.Meetings
             .Include(m => m.Host)
@@ -70,9 +70,13 @@ public class MeetingService(AppDbContext db)
         if (meeting is null || meeting.Status == MeetingStatus.Ended)
             return null;
 
+        var trimmedGuestKey = string.IsNullOrWhiteSpace(guestKey) ? null : guestKey.Trim();
+
         MeetingParticipant? participant = userId is { } uid
             ? meeting.Participants.FirstOrDefault(p => p.UserId == uid)
-            : null;
+            : trimmedGuestKey is not null
+                ? meeting.Participants.FirstOrDefault(p => p.UserId == null && p.GuestKey == trimmedGuestKey)
+                : null;
 
         if (participant is null)
         {
@@ -86,6 +90,7 @@ public class MeetingService(AppDbContext db)
             {
                 MeetingId = meeting.Id,
                 UserId = userId,
+                GuestKey = userId is null ? trimmedGuestKey : null,
                 DisplayName = name,
                 AvatarUrl = avatar,
                 AvatarColor = account?.AvatarColor
@@ -109,6 +114,13 @@ public class MeetingService(AppDbContext db)
             }
 
             participant.User = userId is { } id3 ? await db.Users.FindAsync([id3], ct) : null;
+        }
+        else if (userId is null)
+        {
+            // Returning guest: pick up a name/avatar change since their last visit.
+            if (!string.IsNullOrWhiteSpace(displayName)) participant.DisplayName = displayName.Trim();
+            if (!string.IsNullOrEmpty(avatarUrl)) participant.AvatarUrl = avatarUrl.Trim();
+            await db.SaveChangesAsync(ct);
         }
 
         return new JoinMeetingResponse(ToDetailDto(meeting), ToParticipantDto(participant));
