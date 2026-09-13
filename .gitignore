@@ -4,6 +4,7 @@ obj/
 publish/
 backend/publish*/
 backend/*.tar.gz
+backend/coremeet-api-publish/
 *.user
 appsettings.*.local.json
 
