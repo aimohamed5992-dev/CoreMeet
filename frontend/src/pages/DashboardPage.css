@@ -1,61 +1,73 @@
-.dash { display: flex; flex-direction: column; gap: 28px; }
+.dash { display: flex; flex-direction: column; gap: 22px; }
 
-.dash__greeting h1 { font-size: clamp(1.6rem, 3vw, 2.1rem); }
+.dash__greeting h1 { font-size: clamp(1.4rem, 2.6vw, 1.8rem); }
 .dash__greeting p { color: var(--text-muted); margin-top: 6px; }
 
-/* ---- Start panel ---- */
-.dash__start {
-  padding: 26px;
-  background: linear-gradient(180deg, var(--surface), var(--surface));
-  position: relative;
-  overflow: hidden;
-}
-.dash__start::before {
-  content: "";
-  position: absolute;
-  inset: 0 0 auto auto;
-  width: 260px;
-  height: 260px;
-  background: radial-gradient(circle, var(--brand-50), transparent 70%);
-  transform: translate(40%, -40%);
-  pointer-events: none;
-}
-.dash__start-main {
+/* ---- Top bar: join-by-code pill + New meeting, à la Meet's home row ---- */
+.dash__topbar {
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 12px;
   flex-wrap: wrap;
-  position: relative;
 }
-.dash__new { flex: none; }
-.dash__or { color: var(--text-muted); font-size: 0.9rem; }
 
-.dash__join {
+.dash__joinbar {
   flex: 1;
-  min-width: 240px;
+  min-width: 260px;
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 4px 6px 4px 14px;
+  gap: 10px;
+  padding: 5px 6px 5px 16px;
   border: 1px solid var(--border);
   border-radius: var(--r-full);
-  background: var(--bg);
+  background: var(--surface);
+  transition: border-color 0.15s, box-shadow 0.15s;
 }
-.dash__join:focus-within { border-color: var(--primary); box-shadow: 0 0 0 4px var(--focus-ring); }
-.dash__join-icon { color: var(--text-muted); flex: none; }
-.dash__join-input { flex: 1; min-width: 0; height: 42px; border: none; background: none; outline: none; }
+.dash__joinbar:focus-within { border-color: var(--primary); box-shadow: 0 0 0 4px var(--focus-ring); }
+.dash__joinbar-icon { color: var(--text-muted); flex: none; }
+.dash__joinbar-input { flex: 1; min-width: 0; height: 40px; border: none; background: none; outline: none; color: var(--text); font: inherit; }
+.dash__joinbar-btn {
+  flex: none;
+  font: inherit;
+  font-weight: 700;
+  height: 38px;
+  padding: 0 20px;
+  border: none;
+  border-radius: var(--r-full);
+  background: var(--ink-100);
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+.dash__joinbar-btn:not(:disabled) { background: var(--primary-soft); color: var(--primary); }
+.dash__joinbar-btn:not(:disabled):hover { background: var(--primary); color: #fff; }
+.dash__joinbar-btn:disabled { cursor: not-allowed; }
 
-.dash__error { margin-top: 12px; color: var(--danger); font-size: 0.9rem; }
-.dash__safe {
-  margin-top: 18px;
+.dash__new { flex: none; border-radius: var(--r-full); }
+
+.dash__error { color: var(--danger); font-size: 0.9rem; }
+
+/* ---- Safety banner ---- */
+.dash__safety {
   display: flex;
   align-items: center;
-  gap: 8px;
-  font-size: 0.88rem;
-  color: var(--text-muted);
-  position: relative;
+  gap: 14px;
+  padding: 14px 18px;
+  border-radius: var(--r-lg);
+  background: var(--primary-soft);
 }
-.dash__safe svg { color: var(--primary); flex: none; }
+.dash__safety-icon {
+  flex: none;
+  width: 38px;
+  height: 38px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--surface);
+  color: var(--primary);
+}
+.dash__safety strong { display: block; font-size: 0.92rem; }
+.dash__safety p { margin: 2px 0 0; font-size: 0.85rem; color: var(--text-muted); }
 
 /* ---- Recent ---- */
 .dash__recent h2 { font-size: 1.15rem; margin-bottom: 14px; }
@@ -119,7 +131,11 @@
 
 @media (max-width: 620px) {
   .dash__empty { flex-direction: column; text-align: center; }
-  .dash__join { min-width: 0; width: 100%; }
-  .dash__start-main { flex-direction: column; align-items: stretch; }
-  .dash__or { text-align: center; }
+  .dash__topbar { flex-direction: column; align-items: stretch; }
+  .dash__joinbar { min-width: 0; width: 100%; }
+  .dash__new { width: 100%; justify-content: center; }
+  .dash__safety { align-items: flex-start; }
+  .dash__meeting { flex-wrap: wrap; }
+  .dash__meeting-body { flex-basis: 100%; order: 1; }
+  .dash__meeting-people { margin-inline-start: 58px; order: 2; }
 }

@@ -9,7 +9,7 @@ import { timeAgo } from "../lib/datetime";
 import Avatar from "../components/Avatar";
 import EditableMeetingTitle from "./meeting/EditableMeetingTitle";
 import EmptyMeetings from "../components/EmptyMeetings";
-import { ArrowRightIcon, KeyboardIcon, ShieldIcon, VideoPlusIcon } from "../components/icons";
+import { KeyboardIcon, ShieldIcon, VideoPlusIcon } from "../components/icons";
 import "./DashboardPage.css";
 
 export default function DashboardPage() {
@@ -61,37 +61,40 @@ export default function DashboardPage() {
 
   return (
     <div className="dash">
+      <div className="dash__topbar">
+        <form className="dash__joinbar" onSubmit={join}>
+          <KeyboardIcon className="dash__joinbar-icon" />
+          <input
+            className="dash__joinbar-input"
+            placeholder={t("dashboard.joinPlaceholder")}
+            value={code}
+            onChange={(e) => setCode(e.target.value)}
+            aria-label={t("dashboard.joinAria")}
+          />
+          <button type="submit" className="dash__joinbar-btn" disabled={!code.trim()}>
+            {t("dashboard.join")}
+          </button>
+        </form>
+        <button className="btn btn--primary dash__new" onClick={newMeeting} disabled={creating}>
+          <VideoPlusIcon /> {creating ? t("dashboard.starting") : t("dashboard.newMeeting")}
+        </button>
+      </div>
+      {error && <p className="dash__error">{error}</p>}
+
+      <div className="dash__safety">
+        <span className="dash__safety-icon">
+          <ShieldIcon width={20} height={20} />
+        </span>
+        <div>
+          <strong>{t("dashboard.safeTitle")}</strong>
+          <p>{t("dashboard.safe")}</p>
+        </div>
+      </div>
+
       <header className="dash__greeting">
         <h1>{t("dashboard.greetingLine", { greeting, name: user?.name.split(" ")[0] ?? "" })}</h1>
         <p>{t("dashboard.subtitle")}</p>
       </header>
-
-      <section className="dash__start card">
-        <div className="dash__start-main">
-          <button className="btn btn--primary btn--lg dash__new" onClick={newMeeting} disabled={creating}>
-            <VideoPlusIcon /> {creating ? t("dashboard.starting") : t("dashboard.newMeeting")}
-          </button>
-          <span className="dash__or">{t("dashboard.or")}</span>
-          <form className="dash__join" onSubmit={join}>
-            <KeyboardIcon className="dash__join-icon" />
-            <input
-              className="dash__join-input"
-              placeholder={t("dashboard.joinPlaceholder")}
-              value={code}
-              onChange={(e) => setCode(e.target.value)}
-              aria-label={t("dashboard.joinAria")}
-            />
-            <button type="submit" className="btn btn--ghost" disabled={!code.trim()}>
-              {t("dashboard.join")} <ArrowRightIcon width={16} height={16} />
-            </button>
-          </form>
-        </div>
-        {error && <p className="dash__error">{error}</p>}
-        <p className="dash__safe">
-          <ShieldIcon width={16} height={16} />
-          {t("dashboard.safe")}
-        </p>
-      </section>
 
       <section className="dash__recent">
         <h2>{t("dashboard.recent")}</h2>
@@ -116,7 +119,7 @@ export default function DashboardPage() {
           <ul className="dash__recent-list">
             {recent.map((m) => (
               <li key={m.id} className="dash__meeting card">
-                <div className="dash__meeting-icon" style={{ background: m.status === 2 ? "var(--ink-200)" : "var(--brand-50)" }}>
+                <div className="dash__meeting-icon" style={{ background: m.status === 2 ? "var(--ink-200)" : "var(--primary-soft)" }}>
                   <VideoPlusIcon />
                 </div>
                 <div className="dash__meeting-body">
