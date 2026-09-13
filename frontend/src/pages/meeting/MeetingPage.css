@@ -53,8 +53,13 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
+  min-width: 0;
+  max-width: 100%;
   font-size: 0.8rem;
   color: var(--room-text-dim);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .room__code:hover { color: var(--primary); }
 .room__top-right { margin-inline-start: auto; display: flex; align-items: center; gap: 12px; }
@@ -157,19 +162,42 @@
   display: flex;
   align-items: center;
   gap: 6px;
-  padding: 8px 12px;
-  background: linear-gradient(transparent, rgba(0, 0, 0, 0.6));
+  padding: 6px 10px;
+  background: linear-gradient(transparent, rgba(0, 0, 0, 0.65));
   font-size: 0.82rem;
 }
-.vtile__name { color: #fff; font-weight: 500; }
-.vtile__mute { color: #ff6b6b; display: inline-flex; }
+/* Always a single line, ellipsized — a long name used to wrap onto 2-3 lines
+   and balloon the badge until it covered most of a small tile. */
+.vtile__name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: #fff;
+  font-weight: 500;
+}
+.vtile__mute { flex: none; color: #ff6b6b; display: inline-flex; }
 .vtile__tag {
+  flex: none;
   margin-inline-start: auto;
   font-size: 0.68rem;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.05em;
   color: var(--brand-300);
+}
+
+/* Small tiles (rail thumbnails, cramped mobile grids) get a tighter badge. */
+.room__rail .vtile__bar,
+.room__grid[data-count="4"] .vtile__bar,
+.room__grid[data-count="5"] .vtile__bar,
+.room__grid[data-count="6"] .vtile__bar,
+.room__grid[data-count="7"] .vtile__bar,
+.room__grid[data-count="8"] .vtile__bar,
+.room__grid[data-count="9"] .vtile__bar {
+  padding: 5px 8px;
+  font-size: 0.74rem;
 }
 
 .vtile--reconnecting .vtile__video,
