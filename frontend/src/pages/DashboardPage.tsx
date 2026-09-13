@@ -10,6 +10,8 @@ import Avatar from "../components/Avatar";
 import EditableMeetingTitle from "./meeting/EditableMeetingTitle";
 import EmptyMeetings from "../components/EmptyMeetings";
 import { KeyboardIcon, ShieldIcon, VideoPlusIcon } from "../components/icons";
+import NewMeetingMenu from "./NewMeetingMenu";
+import MeetingReadyDialog from "./MeetingReadyDialog";
 import "./DashboardPage.css";
 
 export default function DashboardPage() {
@@ -21,6 +23,7 @@ export default function DashboardPage() {
   const [creating, setCreating] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [recent, setRecent] = useState<MeetingSummary[] | null>(null);
+  const [ready, setReady] = useState<{ code: string; title: string } | null>(null);
 
   useEffect(() => {
     meetingsApi.listMine().then(setRecent).catch(() => setRecent([]));
@@ -37,7 +40,9 @@ export default function DashboardPage() {
     }
   };
 
-  const newMeeting = async () => {
+  const refreshRecent = () => meetingsApi.listMine().then(setRecent).catch(() => undefined);
+
+  const startInstant = async () => {
     setError(null);
     setCreating(true);
     try {
@@ -45,6 +50,52 @@ export default function DashboardPage() {
       navigate(`/meeting/${meeting.code}`);
     } catch (e) {
       setError(errorMessage(e, "errors.startMeetingFailed", t));
+      setCreating(false);
+    }
+  };
+
+  const createForLater = async () => {
+    setError(null);
+    setCreating(true);
+    try {
+      const meeting = await meetingsApi.create(t("dashboard.newMeeting"));
+      setReady({ code: meeting.code, title: meeting.title });
+      refreshRecent();
+    } catch (e) {
+      setError(errorMessage(e, "errors.startMeetingFailed", t));
+    } finally {
+      setCreating(false);
+    }
+  };
+
+  /**
+   * "Schedule in Google Calendar": creates the meeting, then opens Google
+   * Calendar's own pre-filled event-creation page with the title, join link,
+   * and a placeholder time (1h from now) the user can freely change before
+   * saving. There's no Google OAuth wired up in this app, so this can't
+   * silently insert the event — the user still clicks Save on Google's page.
+   */
+  const scheduleInCalendar = async () => {
+    setError(null);
+    setCreating(true);
+    try {
+      const meeting = await meetingsApi.create(t("dashboard.newMeeting"));
+      refreshRecent();
+      const link = `${location.origin}/meeting/${meeting.code}`;
+      const start = new Date(Date.now() + 60 * 60 * 1000);
+      const end = new Date(start.getTime() + 30 * 60 * 1000);
+      const fmt = (d: Date) => d.toISOString().replace(/[-:]|\.\d{3}/g, "");
+      const params = new URLSearchParams({
+        action: "TEMPLATE",
+        text: meeting.title,
+        dates: `${fmt(start)}/${fmt(end)}`,
+        details: t("dashboard.calendarDetails", { link }),
+        location: link,
+      });
+      window.open(`https://calendar.google.com/calendar/render?${params}`, "_blank", "noopener,noreferrer");
+    } catch (e) {
+      setError(errorMessage(e, "errors.startMeetingFailed", t));
+    } finally {
       setCreating(false);
     }
   };
@@ -75,9 +126,12 @@ export default function DashboardPage() {
             {t("dashboard.join")}
           </button>
         </form>
-        <button className="btn btn--primary dash__new" onClick={newMeeting} disabled={creating}>
-          <VideoPlusIcon /> {creating ? t("dashboard.starting") : t("dashboard.newMeeting")}
-        </button>
+        <NewMeetingMenu
+          busy={creating}
+          onInstant={startInstant}
+          onForLater={createForLater}
+          onSchedule={scheduleInCalendar}
+        />
       </div>
       {error && <p className="dash__error">{error}</p>}
 
@@ -110,7 +164,7 @@ export default function DashboardPage() {
             <div>
               <h3>{t("dashboard.noMeetingsTitle")}</h3>
               <p>{t("dashboard.noMeetingsText")}</p>
-              <button className="btn btn--primary" onClick={newMeeting} disabled={creating}>
+              <button className="btn btn--primary" onClick={startInstant} disabled={creating}>
                 <VideoPlusIcon /> {t("dashboard.startFirst")}
               </button>
             </div>
@@ -155,6 +209,15 @@ export default function DashboardPage() {
           </ul>
         )}
       </section>
+
+      {ready && (
+        <MeetingReadyDialog
+          title={ready.title}
+          code={ready.code}
+          onJoin={() => navigate(`/meeting/${ready.code}`)}
+          onClose={() => setReady(null)}
+        />
+      )}
     </div>
   );
 }
