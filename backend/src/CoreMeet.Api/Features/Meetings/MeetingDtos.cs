@@ -9,6 +9,12 @@ public record CreateMeetingRequest
     public string? Title { get; init; }
 }
 
+public record RenameMeetingRequest
+{
+    [Required, StringLength(200, MinimumLength = 1)]
+    public string Title { get; init; } = string.Empty;
+}
+
 public record JoinMeetingRequest
 {
     /// <summary>Required when joining without an account (guest). Ignored for authenticated users.</summary>
@@ -17,6 +23,14 @@ public record JoinMeetingRequest
 
     /// <summary>Optional guest avatar as a data URI.</summary>
     public string? AvatarUrl { get; init; }
+
+    /// <summary>
+    /// Client-generated id (persisted in the guest's browser) so a guest who
+    /// leaves and rejoins reuses their roster row instead of duplicating it.
+    /// Ignored for authenticated users, who are matched by their account.
+    /// </summary>
+    [StringLength(80)]
+    public string? GuestKey { get; init; }
 }
 
 public record ParticipantDto(

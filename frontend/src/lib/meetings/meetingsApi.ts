@@ -12,10 +12,14 @@ export const meetingsApi = {
     return data;
   },
 
-  async join(code: string, guest?: { displayName?: string; avatarUrl?: string | null }) {
+  async join(code: string, guest?: { displayName?: string; avatarUrl?: string | null; key?: string }) {
     const { data } = await api.post<JoinMeetingResponse>(
       `/api/meetings/${encodeURIComponent(code)}/join`,
-      { displayName: guest?.displayName, avatarUrl: guest?.avatarUrl ?? undefined },
+      {
+        displayName: guest?.displayName,
+        avatarUrl: guest?.avatarUrl ?? undefined,
+        guestKey: guest?.key,
+      },
     );
     return data;
   },
@@ -23,6 +27,14 @@ export const meetingsApi = {
   async listMine() {
     const { data } = await api.get<MeetingSummary[]>("/api/meetings/mine");
     return data;
+  },
+
+  async rename(code: string, title: string) {
+    const { data } = await api.put<{ title: string }>(
+      `/api/meetings/${encodeURIComponent(code)}`,
+      { title },
+    );
+    return data.title;
   },
 
   async end(code: string) {

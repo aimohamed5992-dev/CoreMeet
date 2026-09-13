@@ -1,11 +1,12 @@
 /**
  * Read an uploaded image file, downscale it to a square, and return a JPEG
  * data URI small enough to store inline (~40–80 KB).
+ * Rejections carry an i18n key as `message` (see `errors.image*`).
  */
 export function fileToAvatarDataUrl(file: File, size = 256): Promise<string> {
   return new Promise((resolve, reject) => {
     if (!file.type.startsWith("image/")) {
-      reject(new Error("Please choose an image file."));
+      reject(new Error("errors.imageNotImage"));
       return;
     }
     const url = URL.createObjectURL(file);
@@ -17,7 +18,7 @@ export function fileToAvatarDataUrl(file: File, size = 256): Promise<string> {
       canvas.height = size;
       const ctx = canvas.getContext("2d");
       if (!ctx) {
-        reject(new Error("Could not process the image."));
+        reject(new Error("errors.imageProcess"));
         return;
       }
       // cover-crop to a square
@@ -29,7 +30,7 @@ export function fileToAvatarDataUrl(file: File, size = 256): Promise<string> {
     };
     img.onerror = () => {
       URL.revokeObjectURL(url);
-      reject(new Error("That image could not be loaded."));
+      reject(new Error("errors.imageLoad"));
     };
     img.src = url;
   });

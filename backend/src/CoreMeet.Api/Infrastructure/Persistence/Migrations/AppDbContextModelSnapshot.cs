@@ -134,6 +134,11 @@ namespace CoreMeet.Api.Infrastructure.Persistence.Migrations
                         .HasColumnType("varchar(120)")
                         .HasColumnName("display_name");
 
+                    b.Property<string>("GuestKey")
+                        .HasMaxLength(80)
+                        .HasColumnType("varchar(80)")
+                        .HasColumnName("guest_key");
+
                     b.Property<bool>("IsConnected")
                         .HasColumnType("tinyint(1)")
                         .HasColumnName("is_connected");
@@ -163,6 +168,9 @@ namespace CoreMeet.Api.Infrastructure.Persistence.Migrations
 
                     b.HasIndex("UserId")
                         .HasDatabaseName("ix_meeting_participants_user_id");
+
+                    b.HasIndex("MeetingId", "GuestKey")
+                        .HasDatabaseName("ix_meeting_participants_meeting_id_guest_key");
 
                     b.HasIndex("MeetingId", "UserId")
                         .IsUnique()

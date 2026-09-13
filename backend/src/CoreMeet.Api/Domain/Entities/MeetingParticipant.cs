@@ -15,6 +15,13 @@ public class MeetingParticipant
 
     public User? User { get; set; }
 
+    /// <summary>
+    /// Client-generated id (stored in the guest's browser) identifying a returning
+    /// guest across leave/rejoin so they get one roster row instead of a new one
+    /// each time. Null for signed-in users, who are matched by <see cref="UserId"/>.
+    /// </summary>
+    public string? GuestKey { get; set; }
+
     public string DisplayName { get; set; } = string.Empty;
 
     /// <summary>Avatar for guests (or a snapshot of the user's avatar), as a data URI.</summary>

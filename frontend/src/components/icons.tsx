@@ -130,3 +130,24 @@ export const DeviceIcon = (p: SVGProps<SVGSVGElement>) => (
     <path d="M2 18h14M18 9h4v11h-4z" />
   </svg>
 );
+
+export const LinkIcon = (p: SVGProps<SVGSVGElement>) => (
+  <svg {...base(p)}>
+    <path d="M9 15l6-6" />
+    <path d="M11 6l1-1a4 4 0 0 1 6 6l-1 1" />
+    <path d="M13 18l-1 1a4 4 0 0 1-6-6l1-1" />
+  </svg>
+);
+
+export const CalendarIcon = (p: SVGProps<SVGSVGElement>) => (
+  <svg {...base(p)}>
+    <rect x="3" y="5" width="18" height="16" rx="2.5" />
+    <path d="M3 10h18M8 3v4M16 3v4" />
+  </svg>
+);
+
+export const ChevronDownIcon = (p: SVGProps<SVGSVGElement>) => (
+  <svg {...base(p)}>
+    <path d="M6 9l6 6 6-6" />
+  </svg>
+);

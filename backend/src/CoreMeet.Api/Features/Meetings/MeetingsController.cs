@@ -44,10 +44,19 @@ public class MeetingsController(MeetingService meetings, ICurrentUser currentUse
             avatar = null; // silently drop an oversized / unsupported guest avatar
         }
 
-        var result = await meetings.JoinAsync(code, currentUser.UserId, req.DisplayName, avatar, ct);
+        var result = await meetings.JoinAsync(code, currentUser.UserId, req.DisplayName, avatar, req.GuestKey, ct);
         return result is null
             ? NotFound(new { message = "This meeting is not available." })
             : Ok(result);
+    }
+
+    [Authorize]
+    [HttpPut("{code}")]
+    public async Task<IActionResult> Rename(string code, RenameMeetingRequest req, CancellationToken ct)
+    {
+        if (currentUser.UserId is not { } userId) return Unauthorized();
+        var title = await meetings.RenameAsync(code, userId, req.Title, ct);
+        return title is null ? Forbid() : Ok(new { title });
     }
 
     [Authorize]

@@ -7,6 +7,7 @@ import {
   useState,
 } from "react";
 import type { ReactNode } from "react";
+import axios from "axios";
 import { authApi } from "./authApi";
 import { getSession, setSession, subscribe } from "./tokenStore";
 import type { User } from "./types";
@@ -51,10 +52,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (s) setSession({ ...s, user: fresh });
         setStatus("authenticated");
       })
-      .catch(() => {
-        if (!cancelled) {
+      .catch((e: unknown) => {
+        if (cancelled) return;
+        // A genuine auth failure (refresh token invalid/expired/revoked) signs
+        // out; a network hiccup or the API being briefly unreachable must not
+        // — keep the cached session so the app keeps working, and the next
+        // successful call will refresh the cached profile.
+        const isAuthFailure =
+          axios.isAxiosError(e) && (e.response?.status === 401 || e.response?.status === 403);
+        if (isAuthFailure) {
           setSession(null);
           setStatus("anonymous");
+        } else {
+          setStatus("authenticated");
         }
       });
     return () => {

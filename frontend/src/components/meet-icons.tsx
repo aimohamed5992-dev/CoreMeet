@@ -49,6 +49,18 @@ export const PresentOffIcon = (p: SVGProps<SVGSVGElement>) => (
   </svg>
 );
 
+export const RecordIcon = (p: SVGProps<SVGSVGElement>) => (
+  <svg {...svg(p)}>
+    <circle cx="12" cy="12" r="7" />
+  </svg>
+);
+
+export const RecordStopIcon = (p: SVGProps<SVGSVGElement>) => (
+  <svg {...svg(p)}>
+    <rect x="6" y="6" width="12" height="12" rx="2" />
+  </svg>
+);
+
 export const ChatIcon = (p: SVGProps<SVGSVGElement>) => (
   <svg {...svg(p)}>
     <path d="M20 2H4a2 2 0 0 0-2 2v18l4-4h14a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2Zm-2 12H6v-2h12v2Zm0-3H6V9h12v2Zm0-3H6V6h12v2Z" />

@@ -1,12 +1,15 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, Outlet, useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import Logo from "../components/Logo";
 import Avatar from "../components/Avatar";
 import ThemeToggle from "../components/ThemeToggle";
+import LanguageToggle from "../components/LanguageToggle";
 import { useAuth } from "../lib/auth/AuthContext";
 import "./AppLayout.css";
 
 export default function AppLayout() {
+  const { t } = useTranslation();
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const [menuOpen, setMenuOpen] = useState(false);
@@ -31,11 +34,12 @@ export default function AppLayout() {
     <div className="app-shell">
       <header className="app-shell__header">
         <div className="app-shell__bar">
-          <Link to="/app" aria-label="CoreMeet home">
+          <Link to="/app" aria-label={t("brand.name")}>
             <Logo size={28} />
           </Link>
 
           <div className="app-shell__right">
+            <LanguageToggle />
             <ThemeToggle />
             <div className="app-shell__account" ref={menuRef}>
               <button className="app-shell__account-btn" onClick={() => setMenuOpen((v) => !v)}>
@@ -56,10 +60,10 @@ export default function AppLayout() {
                     to="/settings"
                     onClick={() => setMenuOpen(false)}
                   >
-                    Profile &amp; photo
+                    {t("appMenu.profilePhoto")}
                   </Link>
                   <button className="app-shell__menu-item" role="menuitem" onClick={signOut}>
-                    Sign out
+                    {t("appMenu.signOut")}
                   </button>
                 </div>
               )}

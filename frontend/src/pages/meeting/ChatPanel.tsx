@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import type { ChatMessage } from "../../lib/meetings/types";
 import { formatTime } from "../../lib/datetime";
 import { CloseIcon, SendIcon } from "../../components/meet-icons";
@@ -14,6 +15,7 @@ export default function ChatPanel({
   onSend: (content: string) => void;
   onClose: () => void;
 }) {
+  const { t } = useTranslation();
   const [draft, setDraft] = useState("");
   const endRef = useRef<HTMLDivElement>(null);
 
@@ -32,16 +34,14 @@ export default function ChatPanel({
   return (
     <aside className="side">
       <header className="side__head">
-        <h2>In-call messages</h2>
-        <button className="side__close" onClick={onClose} aria-label="Close">
+        <h2>{t("chat.title")}</h2>
+        <button className="side__close" onClick={onClose} aria-label={t("common.close")}>
           <CloseIcon width={18} height={18} />
         </button>
       </header>
 
       <div className="chat__log">
-        {messages.length === 0 && (
-          <p className="chat__empty">Messages sent here are visible to everyone in the call.</p>
-        )}
+        {messages.length === 0 && <p className="chat__empty">{t("chat.empty")}</p>}
         {messages.map((m) => {
           const mine = m.senderParticipantId === meId;
           return (
@@ -58,12 +58,12 @@ export default function ChatPanel({
       <form className="chat__form" onSubmit={submit}>
         <input
           className="input"
-          placeholder="Send a message to everyone"
+          placeholder={t("chat.placeholder")}
           value={draft}
           onChange={(e) => setDraft(e.target.value)}
           maxLength={4000}
         />
-        <button className="chat__send" disabled={!draft.trim()} aria-label="Send">
+        <button className="chat__send" disabled={!draft.trim()} aria-label={t("chat.send")}>
           <SendIcon width={20} height={20} />
         </button>
       </form>

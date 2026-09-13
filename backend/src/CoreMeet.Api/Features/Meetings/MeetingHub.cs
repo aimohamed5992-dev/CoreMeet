@@ -1,4 +1,5 @@
 using CoreMeet.Api.Domain.Entities;
+using CoreMeet.Api.Domain.Enums;
 using CoreMeet.Api.Infrastructure.Persistence;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
@@ -9,11 +10,18 @@ namespace CoreMeet.Api.Features.Meetings;
 /// Real-time meeting channel: presence, chat, and WebRTC signaling relay.
 /// Clients call <c>JoinRoom</c> first; everything else is scoped to that room.
 /// </summary>
-public class MeetingHub(AppDbContext db, MeetingConnectionRegistry registry) : Hub
+public class MeetingHub(AppDbContext db, MeetingConnectionRegistry registry, ControlRegistry control, JoinRequestRegistry joinRequests) : Hub
 {
     // ---- Presence -------------------------------------------------
+    //
+    // The host is admitted straight in. Anyone else "knocks": they're held in
+    // JoinRequestRegistry (never added to the live room / SignalR group) until
+    // the host calls AdmitParticipant. A brief reconnect (network blip, page
+    // refresh) within 30s of dropping skips the knock again.
 
-    public async Task JoinRoom(string code, Guid participantId)
+    private static readonly TimeSpan ReconnectGrace = TimeSpan.FromSeconds(30);
+
+    public async Task JoinRoom(string code, Guid participantId, string? client = null)
     {
         var participant = await db.MeetingParticipants
             .Include(p => p.Meeting)
@@ -26,36 +34,134 @@ public class MeetingHub(AppDbContext db, MeetingConnectionRegistry registry) : H
             return;
         }
 
+        var isHost = participant.Role == ParticipantRole.Host;
+        var recentlyConnected = participant.IsConnected ||
+            (participant.LeftAt is { } left && DateTime.UtcNow - left < ReconnectGrace);
+
+        if (!isHost && !recentlyConnected)
+        {
+            var avatarColor = participant.User?.AvatarColor ?? participant.AvatarColor;
+            var avatarUrl = participant.User?.AvatarUrl ?? participant.AvatarUrl;
+            joinRequests.Add(new JoinRequest(
+                Context.ConnectionId, code, participantId, participant.DisplayName, avatarColor, avatarUrl, client));
+
+            await Clients.Caller.SendAsync("joinPending");
+
+            var hostConnections = registry.InRoom(code).Where(c => c.IsHost);
+            foreach (var h in hostConnections)
+                await Clients.Client(h.ConnectionId).SendAsync("joinRequested", new
+                {
+                    connectionId = Context.ConnectionId,
+                    participantId,
+                    displayName = participant.DisplayName,
+                    avatarColor,
+                    avatarUrl,
+                });
+            return;
+        }
+
+        await AdmitToRoomAsync(code, Context.ConnectionId, participant, client);
+
+        if (isHost)
+        {
+            // I'm the host arriving — hand me anyone who's been knocking.
+            foreach (var pending in joinRequests.InRoom(code))
+                await Clients.Caller.SendAsync("joinRequested", new
+                {
+                    connectionId = pending.ConnectionId,
+                    participantId = pending.ParticipantId,
+                    displayName = pending.DisplayName,
+                    avatarColor = pending.AvatarColor,
+                    avatarUrl = pending.AvatarUrl,
+                });
+        }
+    }
+
+    /// <summary>The host admits (or denies) a pending join request.</summary>
+    public async Task AdmitParticipant(string connectionId, bool granted)
+    {
+        var host = registry.Get(Context.ConnectionId);
+        if (host is null || !host.IsHost) return;
+
+        var pending = joinRequests.Remove(connectionId);
+        if (pending is null || pending.Code != host.Code) return;
+
+        if (!granted)
+        {
+            await Clients.Client(connectionId).SendAsync("joinDenied");
+            return;
+        }
+
+        var participant = await db.MeetingParticipants
+            .Include(p => p.Meeting)
+            .Include(p => p.User)
+            .FirstOrDefaultAsync(p => p.Id == pending.ParticipantId);
+        if (participant is null) return;
+
+        await AdmitToRoomAsync(pending.Code, connectionId, participant, pending.Client);
+    }
+
+    /// <summary>Adds a connection to the live room: registry, WebRTC roster, control state.</summary>
+    private async Task AdmitToRoomAsync(string code, string connectionId, MeetingParticipant participant, string? client)
+    {
+        var isDesktop = string.Equals(client, "desktop", StringComparison.OrdinalIgnoreCase);
+
         participant.IsConnected = true;
         participant.LeftAt = null;
         await db.SaveChangesAsync();
 
-        await Groups.AddToGroupAsync(Context.ConnectionId, code);
+        await Groups.AddToGroupAsync(connectionId, code);
 
         var avatarColor = participant.User?.AvatarColor ?? participant.AvatarColor;
         var avatarUrl = participant.User?.AvatarUrl ?? participant.AvatarUrl;
 
         var peers = registry.InRoom(code)
-            .Select(c => new { c.ConnectionId, c.ParticipantId, c.DisplayName, c.AvatarColor, c.AvatarUrl })
+            .Select(c => new
+            {
+                c.ConnectionId, c.ParticipantId, c.DisplayName, c.AvatarColor, c.AvatarUrl,
+                desktop = c.IsDesktop,
+            })
             .ToList();
 
         registry.Add(new ConnectionInfo(
-            Context.ConnectionId, code, participantId, participant.DisplayName, avatarColor, avatarUrl));
+            connectionId, code, participant.Id, participant.DisplayName, avatarColor, avatarUrl)
+        {
+            IsDesktop = isDesktop,
+            IsHost = participant.Role == ParticipantRole.Host,
+        });
 
         // Tell the newcomer who's already here (they will initiate the WebRTC offers).
-        await Clients.Caller.SendAsync("roomPeers", peers);
+        await Clients.Client(connectionId).SendAsync("roomPeers", peers);
 
-        // Tell everyone else about the newcomer.
+        // Bring the newcomer up to speed on any active screen-control session.
+        var sessions = control.InRoom(code)
+            .Select(s => new
+            {
+                targetConnectionId = s.TargetConnectionId,
+                controllerConnectionId = s.ControllerConnectionId,
+                controllerName = s.ControllerName,
+            })
+            .ToList();
+        if (sessions.Count > 0)
+            await Clients.Client(connectionId).SendAsync("controlSessions", sessions);
+
+        // Tell everyone else about the newcomer. GroupExcept (not OthersInGroup)
+        // because this can be called by the host on the admittee's behalf
+        // (AdmitParticipant) — "others" must exclude the newcomer, not the caller.
         var payload = new
         {
-            connectionId = Context.ConnectionId,
-            participantId,
+            connectionId,
+            participantId = participant.Id,
             displayName = participant.DisplayName,
             avatarColor,
             avatarUrl,
             role = participant.Role.ToString(),
+            desktop = isDesktop,
         };
-        await Clients.OthersInGroup(code).SendAsync("peerJoined", payload);
+        await Clients.GroupExcept(code, [connectionId]).SendAsync("peerJoined", payload);
+
+        // Finally, tell the newcomer they're fully in (unblocks their "waiting for host" UI).
+        await Clients.Client(connectionId).SendAsync("joinApproved");
     }
 
     public async Task LeaveRoom()
@@ -71,6 +177,14 @@ public class MeetingHub(AppDbContext db, MeetingConnectionRegistry registry) : H
 
     private async Task HandleDisconnect()
     {
+        var pending = joinRequests.Remove(Context.ConnectionId);
+        if (pending is not null)
+        {
+            // A knocking connection went away before the host responded.
+            foreach (var h in registry.InRoom(pending.Code).Where(c => c.IsHost))
+                await Clients.Client(h.ConnectionId).SendAsync("joinRequestCancelled", Context.ConnectionId);
+        }
+
         var info = registry.Remove(Context.ConnectionId);
         if (info is null) return;
 
@@ -86,6 +200,10 @@ public class MeetingHub(AppDbContext db, MeetingConnectionRegistry registry) : H
                 await db.SaveChangesAsync();
             }
         }
+
+        // Tear down any screen-control session this connection was part of.
+        foreach (var session in control.EndAllInvolving(Context.ConnectionId))
+            await NotifyControlEnded(session, Context.ConnectionId);
 
         await Groups.RemoveFromGroupAsync(Context.ConnectionId, info.Code);
         await Clients.Group(info.Code).SendAsync("peerLeft", new
@@ -124,19 +242,161 @@ public class MeetingHub(AppDbContext db, MeetingConnectionRegistry registry) : H
             message.Id, message.SenderParticipantId, message.SenderName, message.Content, message.SentAt));
     }
 
-    // ---- Media state (mic / camera on-off, shown on remote tiles) ----
-
-    public Task SetMediaState(bool audio, bool video, bool screen)
+    /// <summary>Host renames the meeting; every participant sees it live.</summary>
+    public async Task RenameMeeting(string title)
     {
         var info = registry.Get(Context.ConnectionId);
-        if (info is null) return Task.CompletedTask;
-        return Clients.OthersInGroup(info.Code).SendAsync("peerMediaState", new
+        if (info is null || string.IsNullOrWhiteSpace(title)) return;
+
+        var trimmed = title.Trim();
+        if (trimmed.Length > 200) trimmed = trimmed[..200];
+
+        var participant = await db.MeetingParticipants
+            .Include(p => p.Meeting)
+            .FirstOrDefaultAsync(p => p.Id == info.ParticipantId);
+        var meeting = participant?.Meeting;
+        if (meeting is null || meeting.HostId != participant!.UserId ||
+            meeting.Status == MeetingStatus.Ended)
+            return;
+
+        meeting.Title = trimmed;
+        await db.SaveChangesAsync();
+
+        await Clients.Group(info.Code).SendAsync("meetingRenamed", new { title = trimmed });
+    }
+
+    // ---- Media state (mic / camera on-off, shown on remote tiles) ----
+
+    public async Task SetMediaState(bool audio, bool video, bool screen)
+    {
+        var info = registry.Get(Context.ConnectionId);
+        if (info is null) return;
+
+        var wasSharing = info.SharingScreen;
+        info.SharingScreen = screen;
+
+        // Stopping a screen share immediately ends any control of it.
+        if (wasSharing && !screen)
+        {
+            var session = control.EndByTarget(Context.ConnectionId);
+            if (session is not null) await NotifyControlEnded(session, Context.ConnectionId);
+        }
+
+        await Clients.OthersInGroup(info.Code).SendAsync("peerMediaState", new
         {
             connectionId = Context.ConnectionId,
             participantId = info.ParticipantId,
             audio,
             video,
             screen,
+        });
+    }
+
+    // ---- Remote control of a shared screen ----------------------------
+    //
+    // A viewer requests control of the person sharing their screen; that person
+    // must explicitly grant it and can revoke it at any moment. Input events are
+    // relayed as opaque JSON strings (see the client contract):
+    //   { t:"move|down|up|click|dblclick", x,y }   coords normalised 0..1 of the shared frame
+    //   { t:"wheel", dx,dy,x,y }
+    //   { t:"key", code,key,down, mods:{ctrl,alt,shift,meta} }
+
+    private const int MaxControlEventBytes = 2048;
+
+    /// <summary>Ask the person sharing their screen (<paramref name="targetConnectionId"/>) for control.</summary>
+    public async Task RequestControl(string targetConnectionId)
+    {
+        var me = registry.Get(Context.ConnectionId);
+        var target = registry.Get(targetConnectionId);
+        if (me is null || target is null || me.Code != target.Code || targetConnectionId == Context.ConnectionId)
+            return;
+
+        if (!target.IsDesktop)
+        {
+            // Only the CoreMeet desktop app can inject input — a browser can't be a target.
+            await Clients.Caller.SendAsync("controlDenied", targetConnectionId, "web_target");
+            return;
+        }
+        if (!target.SharingScreen)
+        {
+            await Clients.Caller.SendAsync("controlDenied", targetConnectionId, "not_sharing");
+            return;
+        }
+        if (control.GetByTarget(targetConnectionId) is not null)
+        {
+            await Clients.Caller.SendAsync("controlDenied", targetConnectionId, "busy");
+            return;
+        }
+
+        await Clients.Client(targetConnectionId).SendAsync("controlRequested", new
+        {
+            connectionId = Context.ConnectionId,
+            participantId = me.ParticipantId,
+            name = me.DisplayName,
+        });
+    }
+
+    /// <summary>The person sharing responds to a pending control request.</summary>
+    public async Task RespondControl(string requesterConnectionId, bool granted)
+    {
+        var me = registry.Get(Context.ConnectionId); // the sharer
+        var requester = registry.Get(requesterConnectionId);
+        if (me is null || requester is null || me.Code != requester.Code)
+            return;
+
+        if (!granted || !me.SharingScreen)
+        {
+            await Clients.Client(requesterConnectionId).SendAsync("controlResponse", Context.ConnectionId, false);
+            return;
+        }
+
+        var session = new ControlSession(
+            me.Code, Context.ConnectionId, me.ParticipantId,
+            requesterConnectionId, requester.ParticipantId, requester.DisplayName);
+
+        if (!control.TryStart(session))
+        {
+            await Clients.Client(requesterConnectionId).SendAsync("controlResponse", Context.ConnectionId, false);
+            return;
+        }
+
+        await Clients.Client(requesterConnectionId).SendAsync("controlResponse", Context.ConnectionId, true);
+        await Clients.Caller.SendAsync("controlGranted", requesterConnectionId, requester.DisplayName, requester.ParticipantId);
+        await Clients.OthersInGroup(me.Code).SendAsync("controlStarted", new
+        {
+            targetConnectionId = Context.ConnectionId,
+            controllerConnectionId = requesterConnectionId,
+            controllerName = requester.DisplayName,
+        });
+    }
+
+    /// <summary>The active controller sends one input event to the person being controlled.</summary>
+    public Task SendControlEvent(string ev)
+    {
+        if (string.IsNullOrEmpty(ev) || System.Text.Encoding.UTF8.GetByteCount(ev) > MaxControlEventBytes)
+            return Task.CompletedTask;
+
+        var session = control.GetByController(Context.ConnectionId);
+        if (session is null) return Task.CompletedTask;
+
+        return Clients.Client(session.TargetConnectionId).SendAsync("controlEvent", ev);
+    }
+
+    /// <summary>Either party ends the control session.</summary>
+    public async Task RevokeControl()
+    {
+        var session = control.EndByController(Context.ConnectionId) ?? control.EndByTarget(Context.ConnectionId);
+        if (session is not null) await NotifyControlEnded(session, Context.ConnectionId);
+    }
+
+    private async Task NotifyControlEnded(ControlSession s, string byConnectionId)
+    {
+        await Clients.Clients(s.TargetConnectionId, s.ControllerConnectionId)
+            .SendAsync("controlEnded", byConnectionId);
+        await Clients.Group(s.Code).SendAsync("controlStopped", new
+        {
+            targetConnectionId = s.TargetConnectionId,
+            controllerConnectionId = s.ControllerConnectionId,
         });
     }
 

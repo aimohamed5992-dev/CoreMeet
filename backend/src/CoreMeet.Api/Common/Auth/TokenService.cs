@@ -15,6 +15,9 @@ public interface ITokenService
     /// <summary>Returns the raw refresh token to hand to the client and the entity to persist.</summary>
     (string rawToken, RefreshToken entity) CreateRefreshToken(Guid userId);
 
+    /// <summary>Slides a refresh token's expiry forward on use, without changing its value.</summary>
+    void RenewRefreshToken(RefreshToken entity);
+
     string Hash(string rawToken);
 }
 
@@ -56,6 +59,9 @@ public class TokenService(JwtSettings settings) : ITokenService
         };
         return (raw, entity);
     }
+
+    public void RenewRefreshToken(RefreshToken entity) =>
+        entity.ExpiresAt = DateTime.UtcNow.AddDays(settings.RefreshTokenDays);
 
     public string Hash(string rawToken)
     {

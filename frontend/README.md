@@ -1,6 +1,6 @@
-# CoreMeet — frontend
+# Cloud Meet — frontend
 
-React 19 + Vite + TypeScript client for CoreMeet.
+React 19 + Vite + TypeScript client for Cloud Meet.
 
 ```bash
 cp .env.example .env

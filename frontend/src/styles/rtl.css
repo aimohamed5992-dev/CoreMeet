@@ -1,0 +1,76 @@
+/* Right-to-left overrides.
+   Most layout uses logical properties (margin-inline / inset-inline / text-align:start)
+   and needs nothing here — this file only fixes physical offsets, mirrored decoration,
+   and directional icons. */
+
+/* --- Arabic uses Cairo; headings drop the Latin display face --- */
+[dir="rtl"] body,
+[dir="rtl"] h1,
+[dir="rtl"] h2,
+[dir="rtl"] h3,
+[dir="rtl"] h4,
+[dir="rtl"] button,
+[dir="rtl"] input,
+[dir="rtl"] textarea,
+[dir="rtl"] select {
+  font-family: var(--font-ar);
+}
+[dir="rtl"] h1,
+[dir="rtl"] h2,
+[dir="rtl"] h3,
+[dir="rtl"] h4 {
+  letter-spacing: 0;
+}
+/* Arabic runs longer — ease the hero headline down a notch */
+[dir="rtl"] .landing__hero-copy h1 { font-size: clamp(1.9rem, 3.1vw, 2.7rem); line-height: 1.28; }
+[dir="rtl"] .landing__hl { line-height: 1.28; }
+
+/* --- Directional icons: arrows / send / link glyphs point the other way in RTL --- */
+[dir="rtl"] .landing__cta-btn svg,
+[dir="rtl"] .landing__join .btn--ghost svg,
+[dir="rtl"] .btn--primary.btn--lg > svg:last-child,
+[dir="rtl"] .dash__join .btn--ghost svg,
+[dir="rtl"] .landing__hero-copy .btn--ghost svg,
+[dir="rtl"] .chat__send svg {
+  transform: scaleX(-1);
+}
+
+/* --- Landing hero: floating chips hang off the opposite edges --- */
+[dir="rtl"] .landing__hero-chip--a { left: auto; right: -34px; }
+[dir="rtl"] .landing__hero-chip--b { right: auto; left: -30px; }
+
+@media (max-width: 560px) {
+  [dir="rtl"] .landing__hero-chip--a { right: 0; }
+  [dir="rtl"] .landing__hero-chip--b { left: 0; }
+}
+
+/* --- Landing hero: background blobs mirror so the composition stays balanced --- */
+[dir="rtl"] .blob--1 { right: auto; left: -120px; }
+[dir="rtl"] .blob--2 { left: auto; right: -140px; }
+
+/* --- Marketing header: keep the brand on the leading edge --- */
+[dir="rtl"] .marketing__nav { margin-inline-start: 12px; }
+
+/* --- Numerals: keep Western digits in code/inputs even in Arabic UI --- */
+[dir="rtl"] input,
+[dir="rtl"] .room__code,
+[dir="rtl"] code,
+[dir="rtl"] .mono {
+  font-feature-settings: normal;
+}
+
+/* --- Meeting room: side panel slides from the leading edge in RTL --- */
+[dir="rtl"] .side { border-inline-start: none; border-inline-end: 1px solid var(--room-border); }
+@media (max-width: 720px) {
+  [dir="rtl"] .side { inset: 0 auto 0 0; }
+}
+
+/* --- Lobby toggles group --- */
+.lobby__panel-toggles { display: flex; align-items: center; gap: 8px; }
+
+/* --- Dashboard / lobby: meeting codes stay LTR so abc-defg-hij reads right --- */
+[dir="rtl"] .dash__meeting-meta,
+[dir="rtl"] .room__code,
+[dir="rtl"] .lobby__name .input {
+  unicode-bidi: plaintext;
+}

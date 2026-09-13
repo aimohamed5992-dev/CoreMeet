@@ -1,14 +1,17 @@
 import type { ReactNode } from "react";
 import { Link } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import Logo from "../../components/Logo";
 import BrandImage from "../../components/BrandImage";
+import ThemeToggle from "../../components/ThemeToggle";
+import LanguageToggle from "../../components/LanguageToggle";
 import { ShieldIcon, BoltIcon, UsersIcon } from "../../components/icons";
 import "./AuthShell.css";
 
-const points = [
-  { icon: <BoltIcon width={16} height={16} />, text: "Start a meeting in one click" },
-  { icon: <UsersIcon width={16} height={16} />, text: "Group video over WebRTC" },
-  { icon: <ShieldIcon width={16} height={16} />, text: "Private rooms, host-controlled" },
+const pointIcons = [
+  <BoltIcon width={16} height={16} />,
+  <UsersIcon width={16} height={16} />,
+  <ShieldIcon width={16} height={16} />,
 ];
 
 export default function AuthShell({
@@ -22,6 +25,9 @@ export default function AuthShell({
   children: ReactNode;
   footer: ReactNode;
 }) {
+  const { t } = useTranslation();
+  const points = t("auth.shellPoints", { returnObjects: true }) as string[];
+
   return (
     <div className="auth">
       <aside className="auth__brand">
@@ -31,12 +37,12 @@ export default function AuthShell({
           <Logo size={30} tone="mono-light" />
         </Link>
         <div className="auth__brand-body">
-          <h2>Meetings that start the moment you do.</h2>
+          <h2>{t("auth.shellHeading")}</h2>
           <ul>
-            {points.map((p) => (
-              <li key={p.text}>
-                <span className="auth__brand-icon">{p.icon}</span>
-                {p.text}
+            {points.map((p, i) => (
+              <li key={p}>
+                <span className="auth__brand-icon">{pointIcons[i]}</span>
+                {p}
               </li>
             ))}
           </ul>
@@ -44,6 +50,10 @@ export default function AuthShell({
       </aside>
 
       <main className="auth__panel">
+        <div className="auth__toggles">
+          <LanguageToggle />
+          <ThemeToggle />
+        </div>
         <div className="auth__card">
           <Link to="/" className="auth__panel-logo">
             <Logo size={28} />

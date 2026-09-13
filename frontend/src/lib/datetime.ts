@@ -10,19 +10,23 @@ export function parseServerDate(value: string): Date {
   return new Date(v);
 }
 
+const locale = () => (typeof document !== "undefined" ? document.documentElement.lang || "en" : "en");
+
 export function formatTime(value: string): string {
   const d = parseServerDate(value);
   return Number.isNaN(d.getTime())
     ? ""
-    : d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+    : d.toLocaleTimeString(locale(), { hour: "2-digit", minute: "2-digit" });
 }
 
+/** Localised "5 min ago" / "قبل ٥ دقائق" via Intl.RelativeTimeFormat. */
 export function timeAgo(value: string): string {
   const d = parseServerDate(value);
   const s = Math.round((Date.now() - d.getTime()) / 1000);
   if (Number.isNaN(s)) return "";
-  if (s < 60) return "just now";
-  if (s < 3600) return `${Math.floor(s / 60)} min ago`;
-  if (s < 86400) return `${Math.floor(s / 3600)} h ago`;
-  return d.toLocaleDateString();
+  const rtf = new Intl.RelativeTimeFormat(locale(), { numeric: "auto" });
+  if (s < 60) return rtf.format(-s, "second");
+  if (s < 3600) return rtf.format(-Math.floor(s / 60), "minute");
+  if (s < 86400) return rtf.format(-Math.floor(s / 3600), "hour");
+  return d.toLocaleDateString(locale());
 }

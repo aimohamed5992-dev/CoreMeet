@@ -46,15 +46,15 @@
   position: relative;
   z-index: 1;
   display: grid;
-  grid-template-columns: 1fr 1.05fr;
+  grid-template-columns: 1.05fr 1.05fr;
   gap: 56px;
   align-items: center;
   padding-block: 40px 24px;
 }
 .landing__hero-copy > * { min-width: 0; }
 .landing__hero-copy h1 {
-  font-size: clamp(2.1rem, 4.2vw, 3.35rem);
-  line-height: 1.1;
+  font-size: clamp(2rem, 3.6vw, 3.1rem);
+  line-height: 1.12;
   margin: 20px 0 0;
   letter-spacing: -0.025em;
 }
@@ -123,14 +123,6 @@
   object-fit: cover;
   border-radius: 20px;
   display: block;
-}
-.landing__hero-glyph {
-  position: absolute;
-  width: 190px;
-  right: -46px;
-  bottom: -46px;
-  z-index: -1;
-  opacity: 0.9;
 }
 .landing__hero-chip {
   position: absolute;
@@ -339,7 +331,7 @@
   padding: 18px 20px;
   font-weight: 600;
   font-size: 1rem;
-  text-align: left;
+  text-align: start;
   color: var(--text);
 }
 .landing__faq-item > button svg { color: var(--primary); flex: none; }
