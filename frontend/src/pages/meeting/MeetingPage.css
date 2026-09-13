@@ -91,15 +91,27 @@
 
 .room__grid {
   display: grid;
-  gap: 12px;
+  /* Rows used to be sized by each tile's own aspect-ratio (grid-auto-rows:
+     auto's default), which only looks at column width and never checks
+     available height — with few participants and a wide-but-short window
+     that math easily asks for more height than the stage has, and the
+     bottom row quietly overflowed under the control bar. minmax(0, 1fr)
+     makes rows split the *actual* available height instead. */
+  grid-auto-rows: minmax(0, 1fr);
+  gap: 20px;
   width: 100%;
   height: 100%;
-  max-width: 1400px;
+  max-width: 1200px;
   align-content: center;
   justify-content: center;
+  /* Tiles size to their own max-width/height (below) and center in their
+     cell, rather than stretching to fill it — otherwise 1-3 people on a
+     big screen get tiles blown up to fill the whole window. */
+  justify-items: center;
+  align-items: center;
   grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
 }
-.room__grid[data-count="1"] { grid-template-columns: minmax(0, 760px); }
+.room__grid[data-count="1"] { grid-template-columns: minmax(0, 640px); }
 .room__grid[data-count="2"] { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .room__grid[data-count="3"],
 .room__grid[data-count="4"] { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -143,6 +155,15 @@
   border-radius: var(--r-lg);
   overflow: hidden;
   min-width: 0;
+}
+/* Grid (non-presenting) view only: fill the cell up to a sane cap instead of
+   growing edge-to-edge with just 1-3 people on a big screen, and center
+   within the cell now that .room__grid no longer stretches tiles to fit it. */
+.room__grid .vtile {
+  width: 100%;
+  height: 100%;
+  max-width: 560px;
+  max-height: 420px;
 }
 .vtile--live { border-color: color-mix(in srgb, var(--brand-500) 35%, var(--room-tile-border)); }
 .vtile--screen { background: #0b0f0d; }
