@@ -32,17 +32,30 @@ async function refreshAccessToken(): Promise<string | null> {
       user: data.user,
     });
     return data.accessToken as string;
-  } catch {
-    setSession(null);
+  } catch (e) {
+    // Only a genuine "this refresh token is invalid" response should sign the
+    // user out. A dropped connection, a timeout, or the API being briefly
+    // unreachable must not — the refresh token itself is still fine, and the
+    // next request gets another chance to refresh.
+    if (axios.isAxiosError(e) && e.response?.status === 401) setSession(null);
     return null;
   }
 }
+
+// Endpoints that must NOT trigger a refresh-and-retry: login/register can
+// legitimately 401 for bad credentials, and refresh itself must never retry
+// through this same logic (infinite loop). Everything else under /api/auth/
+// (me, logout, …) is a normal authenticated call and belongs in the retry
+// path below — excluding the whole "/api/auth/" prefix here used to also
+// catch GET /api/auth/me, so an access token merely expiring (every 30 min)
+// signed the user out on the next page load instead of silently refreshing.
+const NO_REFRESH_RETRY = ["/api/auth/login", "/api/auth/register", "/api/auth/refresh"];
 
 api.interceptors.response.use(
   (res) => res,
   async (error: AxiosError) => {
     const original = error.config as InternalAxiosRequestConfig & { _retried?: boolean };
-    const isAuthCall = original?.url?.includes("/api/auth/");
+    const isAuthCall = !!original?.url && NO_REFRESH_RETRY.some((p) => original.url!.includes(p));
 
     if (error.response?.status === 401 && original && !original._retried && !isAuthCall) {
       original._retried = true;

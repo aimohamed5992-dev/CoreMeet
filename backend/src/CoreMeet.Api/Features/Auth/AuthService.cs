@@ -61,27 +61,21 @@ public class AuthService(AppDbContext db, ITokenService tokens)
             .Include(t => t.User)
             .FirstOrDefaultAsync(t => t.TokenHash == hash, ct);
 
-        if (stored is null || stored.User is null)
+        if (stored is null || stored.User is null || !stored.IsActive)
             return AuthResult.Fail("Invalid refresh token.");
 
-        if (!stored.IsActive)
-        {
-            // Reuse of a rotated/revoked token — revoke the whole chain for safety.
-            await db.RefreshTokens
-                .Where(t => t.UserId == stored.UserId && t.RevokedAt == null)
-                .ExecuteUpdateAsync(s => s.SetProperty(t => t.RevokedAt, DateTime.UtcNow), ct);
-            return AuthResult.Fail("Refresh token is no longer valid.");
-        }
-
-        var (rawNew, entityNew) = tokens.CreateRefreshToken(stored.UserId);
-        stored.RevokedAt = DateTime.UtcNow;
-        stored.ReplacedByTokenHash = entityNew.TokenHash;
-        db.RefreshTokens.Add(entityNew);
+        // Sliding expiry, same token value handed back (no rotation): several
+        // tabs/requests can legitimately race to refresh around the same
+        // moment, and rotating on every use turned that benign race into a
+        // false "token reuse" signal that revoked the whole session everywhere.
+        // A stolen token is still bounded by RefreshTokenDays of inactivity and
+        // revocable via logout.
+        tokens.RenewRefreshToken(stored);
 
         var (access, accessExp) = tokens.CreateAccessToken(stored.User);
         await db.SaveChangesAsync(ct);
 
-        return AuthResult.Ok(new AuthResponse(access, accessExp, rawNew, ToDto(stored.User)));
+        return AuthResult.Ok(new AuthResponse(access, accessExp, rawToken, ToDto(stored.User)));
     }
 
     public async Task LogoutAsync(string rawToken, CancellationToken ct)
