@@ -344,6 +344,7 @@
     "chatTitle": "Chat with everyone (c)",
     "leaveTitle": "Leave call",
     "presenting": "Presenting",
+    "reconnecting": "Reconnecting…",
     "muted": "Muted",
     "renameTitle": "Rename meeting",
     "waitingTitle": "Waiting for the host",

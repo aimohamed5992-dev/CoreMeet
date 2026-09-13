@@ -14,6 +14,8 @@ type Props = {
   audioOff?: boolean;
   videoOff?: boolean;
   screen?: boolean;
+  /** The connection to this peer is currently self-healing (disconnected/failed) — audio/video may be frozen or silent for a few seconds. */
+  reconnecting?: boolean;
   /** Fit the video with letterboxing rather than cropping (for shared screens). */
   contain?: boolean;
 };
@@ -29,6 +31,7 @@ export default function VideoTile({
   audioOff,
   videoOff,
   screen,
+  reconnecting,
   contain,
 }: Props) {
   const { t } = useTranslation();
@@ -61,7 +64,13 @@ export default function VideoTile({
   }, [stream]);
 
   return (
-    <div className={`vtile ${hasVideo ? "vtile--live" : ""} ${screen ? "vtile--screen" : ""}`}>
+    <div className={`vtile ${hasVideo ? "vtile--live" : ""} ${screen ? "vtile--screen" : ""} ${reconnecting ? "vtile--reconnecting" : ""}`}>
+      {reconnecting && (
+        <span className="vtile__reconnecting">
+          <span className="vtile__reconnecting-dot" aria-hidden />
+          {t("room.reconnecting")}
+        </span>
+      )}
       <video
         ref={videoRef}
         autoPlay

@@ -53,6 +53,8 @@ export type MeetingRoom = {
   messages: ChatMessage[];
   remoteFeeds: RemoteFeed[];
   remoteMedia: Record<string, RemoteMediaState>;
+  /** Connection ids currently self-healing a dropped connection (show a "reconnecting" hint, not silent dead air). */
+  reconnectingPeers: Set<string>;
   connState: ConnState;
   error: string | null;
   sendMessage: (content: string) => void;
@@ -85,6 +87,8 @@ export function useMeetingRoom(code: string, { localStream, mediaSettled, guest 
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [remoteFeeds, setRemoteFeeds] = useState<RemoteFeed[]>([]);
   const [remoteMedia, setRemoteMedia] = useState<Record<string, RemoteMediaState>>({});
+  /** Connection ids currently self-healing (disconnected/failed, mid ICE-restart) — was previously silent dead air until a manual rejoin. */
+  const [reconnectingPeers, setReconnectingPeers] = useState<Set<string>>(() => new Set());
   const [connState, setConnState] = useState<ConnState>("connecting");
   const [error, setError] = useState<string | null>(null);
 
@@ -174,6 +178,12 @@ export function useMeetingRoom(code: string, { localStream, mediaSettled, guest 
             delete next[peer.connectionId];
             return next;
           });
+          setReconnectingPeers((prev) => {
+            if (!prev.has(peer.connectionId)) return prev;
+            const next = new Set(prev);
+            next.delete(peer.connectionId);
+            return next;
+          });
         });
         hub.on(
           "peerMediaState",
@@ -260,12 +270,26 @@ export function useMeetingRoom(code: string, { localStream, mediaSettled, guest 
         hub.onClose(() => !disposed && setConnState("disconnected"));
 
         // Build the mesh BEFORE joining so we catch the first roomPeers/peerJoined.
-        const mesh = new PeerMesh(hub, (connectionId, stream, meta) => {
-          setRemoteFeeds((prev) => {
-            const rest = prev.filter((f) => f.connectionId !== connectionId);
-            return stream ? [...rest, { connectionId, participantId: meta?.participantId, stream }] : rest;
-          });
-        });
+        const mesh = new PeerMesh(
+          hub,
+          (connectionId, stream, meta) => {
+            setRemoteFeeds((prev) => {
+              const rest = prev.filter((f) => f.connectionId !== connectionId);
+              return stream ? [...rest, { connectionId, participantId: meta?.participantId, stream }] : rest;
+            });
+          },
+          (connectionId, state) => {
+            setReconnectingPeers((prev) => {
+              const bad = state === "disconnected" || state === "failed";
+              const already = prev.has(connectionId);
+              if (bad === already) return prev;
+              const next = new Set(prev);
+              if (bad) next.add(connectionId);
+              else next.delete(connectionId);
+              return next;
+            });
+          },
+        );
         mesh.setLocalStream(streamRef.current);
         meshRef.current = mesh;
 
@@ -378,6 +402,7 @@ export function useMeetingRoom(code: string, { localStream, mediaSettled, guest 
     messages,
     remoteFeeds,
     remoteMedia,
+    reconnectingPeers,
     connState,
     error,
     sendMessage,

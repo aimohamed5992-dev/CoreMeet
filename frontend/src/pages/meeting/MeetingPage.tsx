@@ -164,6 +164,7 @@ export default function MeetingPage({
     audioOff: !media.audioOn,
     videoOff: !media.videoOn && !media.sharingScreen,
     screen: media.sharingScreen,
+    reconnecting: false,
   };
   const remoteTiles = room.remoteFeeds.map((feed) => {
     const p = feed.participantId ? participantById.get(feed.participantId) : undefined;
@@ -179,6 +180,7 @@ export default function MeetingPage({
       audioOff: ms?.audio === false,
       videoOff: ms?.video === false,
       screen: ms?.screen === true,
+      reconnecting: room.reconnectingPeers.has(feed.connectionId),
     };
   });
   const allTiles = [selfTile, ...remoteTiles];
@@ -232,6 +234,7 @@ export default function MeetingPage({
       audioOff={t.audioOff}
       videoOff={t.videoOff}
       screen={t.screen}
+      reconnecting={t.reconnecting}
       contain={big && t.screen}
     />
   );
